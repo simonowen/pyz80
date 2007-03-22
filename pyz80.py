@@ -1,10 +1,20 @@
 #!/usr/bin/env python
 
 def printusage():
-    print "pyz80 by Andrew Collier, version 0.6 10-Feb-2006"
+    print "pyz80 by Andrew Collier, version 0.6+ Mar-2007"
     print "http://www.intensity.org.uk/samcoupe/pyz80.html"
     print "Usage:"
-    print "     pyz80 [-o outputfile] [-s re] inputfile"
+    print "     pyz80 (options) inputfile"
+    print "Options:" 
+    print "-o outputfile"
+    print "   save the resulting disk image at the given path"
+    print "-s regexp"
+    print "   print the value of any symbols matching the given regular expression"
+    print "   This may be specified multiple times to output more than one subset"
+    print "--nozip"
+    print "   do not compress the resulting disk image"
+    print "-e"
+    print "   use python's own error handling instead of trying to catch parse errors"
 
 def printlicense():
     print "This program is free software; you can redistribute it and/or modify"
@@ -22,6 +32,11 @@ def printlicense():
     print "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA"
 
 # CHANGELOG
+
+# version 1.0
+#
+# - option to not gzip the disk image
+# - better package with documentation and test sources
 
 # version 0.6 10-Feb-2006
 #
@@ -61,7 +76,7 @@ def printlicense():
 # - allow underscore character in symbol names, and sanity check for syntax errors
 # - print a subset of the symbol table after assembly is complete
 # - files included by files included along a relative path will search for their files on that path
- 
+
 # version 0.1 19-Nov-2004
 #
 # - initial release
@@ -72,8 +87,12 @@ def printlicense():
 #    I don't think this occurs very often.
 
 # PLANNED CHANGES BEFORE VERSION 1.0
-# - better package with documentation and test sources
+# 
 # - undocumented instructions on low and high bytes of index registers
+# - COMET labels are case insensitive
+# - option to include other files on the resulting disk image
+
+
 
 import getopt
 import sys
@@ -86,7 +105,7 @@ import random
 
 def make_disk_image(memory, outputfile):
     global firstpageoffset
-
+    
     image = array.array('B')
     image.append(0)
     targetsize = 80*10*2*512
@@ -95,34 +114,34 @@ def make_disk_image(memory, outputfile):
     while len(image) < targetsize:
         image.extend(image)
     while len(image) > targetsize:
-        image.pop()  
-        
+        image.pop()
+    
     firstusedpage = ''
     lastusedpage = ''
-
+    
     for i in range(32):
         if memory[i]!='':
             if firstusedpage == '':
                 firstusedpage = i
             lastusedpage = i
-
+    
     if firstusedpage!='':
         filelength = (lastusedpage - firstusedpage + 1) * 16384
-    
+        
         if firstpage == firstusedpage:
             filelength -= firstpageoffset
         else:
             firstpageoffset = 0
-       
+        
         image[0] = 19 # code file
         
         if (autoexecpage>0) :
-
+            
             image[1] = ord('A')
             image[2] = ord('U')
             image[3] = ord('T')
             image[4] = ord('O')
-                
+            
             for i in range(4):
                 if i < len(outputfile):
                     image[5+i] = ord(outputfile[i])
@@ -130,39 +149,39 @@ def make_disk_image(memory, outputfile):
                     image[5+i] = ord(' ')
         
         else:
-        
+            
             for i in range(8):
                 if i < len(outputfile):
                     image[1+i] = ord(outputfile[i])
                 else:
                     image[1+i] = ord(' ')
-
+        
         image[9]  = ord('.')
         image[10] = ord('O') # filename
         
         nsectors = (filelength+9)/510
-        image[11] = nsectors / 256 # MSB number of sectors used 
-        image[12] = nsectors % 256 # LSB number of sectors used 
+        image[11] = nsectors / 256 # MSB number of sectors used
+        image[12] = nsectors % 256 # LSB number of sectors used
         
         image[13] = 4 # starting track
         image[14] = 1 # starting sector
     
     # 15 - 209 sector address map
     # 210-219 MGT future and past (reserved)
-    
+        
         image[220] = 0 # flags (reserved)
     
     # 221-231 File type information (n/a for code files)
     # 232-235 reserved
-    
+        
         image[236] = firstusedpage # start page number
         image[237] = (firstpageoffset%256) # page offset (in section C, 0x8000 - 0xbfff)
         image[238] = 128 + (firstpageoffset / 256)
-    
+        
         image[239] = filelength/16384 # pages in length
         image[240] = filelength%256 # file length % 16384
         image[241] = (filelength%16384)/256
-    
+        
         if (autoexecpage>0) :
             image[242] = autoexecpage # execution address or 255 255 255 (basicpage, L, H - offset in page C)
             image[243] = autoexecorigin % 256;
@@ -182,7 +201,7 @@ def make_disk_image(memory, outputfile):
                 image[i] = (1 << nsectors) -1
                 nsectors=0
             i += 1
-            
+        
         side = 0
         track = 4
         sector = 1
@@ -203,14 +222,14 @@ def make_disk_image(memory, outputfile):
         image[imagepos + 7] = filelength/16384
     # 8       Starting page number
         image[imagepos + 8] = firstusedpage
-    
+        
         while fpos < filelength:
             imagepos = (track*20+side*10+(sector-1))*512
             unadjustedimagepos = imagepos
             if side==0 and track==4 and sector==1:
                 copylen = 501
                 imagepos += 9
-            else: 
+            else:
                 if (filelength-fpos) > 509:
                     copylen = 510
                 else:
@@ -228,7 +247,7 @@ def make_disk_image(memory, outputfile):
                     image[imagepos+copylen1:imagepos+copylen] = memory[page1+1][0 : ((fpos+firstpageoffset)+copylen)%16384]
             
             fpos += copylen
-    
+            
             sector += 1
             if sector == 11:
                 sector = 1
@@ -236,20 +255,23 @@ def make_disk_image(memory, outputfile):
                 if track == 80:
                     track = 0
                     side += 1
-    
+            
             # pointers to next sector and track
             if (fpos < filelength):
                 image[unadjustedimagepos+510] = track + 128*side
                 image[unadjustedimagepos+511] = sector
     
-    imagestr = image.tostring()         
-    dskgz = gzip.open(outputfile, 'wb')
-    dskgz.write(imagestr)
-    dskgz.close()
+    imagestr = image.tostring()
+    if ZIP:
+        dskfile = gzip.open(outputfile, 'wb')
+    else:
+        dskfile = open(outputfile, 'wb')
+    dskfile.write(imagestr)
+    dskfile.close()
+    
+    
+    
 
-    
-    
-    
 def warning(message):
     print 'Warning:', message
     print global_currentfile,'"'+global_currentline.strip()+'"'
@@ -264,7 +286,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
         if silenterror:
             return ''
         fatal("Erroneous comma in expression"+arg)
-
+    
     while 1:
     	match = re.search('"(.)"', arg)
         if match:
@@ -276,15 +298,15 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     arg = arg.replace('%','0b') # COMET syntax for binary literals (parsed later, change to save confusion with modulus)
     arg = arg.replace('\\','%') # COMET syntax for modulus
     arg = arg.replace('&','0x') # COMET syntax for hex numbers
-
+    
     arg = arg.replace('0X','0x') # darnit, this got capitalized
     arg = arg.replace('0B','0b') # darnit, this got capitalized
-
     
             
-# if the argument contains letters at this point, 
-# it's a symbol which needs to be replaced
 
+# if the argument contains letters at this point,
+# it's a symbol which needs to be replaced
+    
     testsymbol=''
     argcopy = ''
     for c in arg+' ':
@@ -298,27 +320,27 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
                     else:
                         understood = 0
                         # some of python's math expressions should be available to the parser
-                        if not understood: 
+                        if not understood:
                             parsestr = 'math.'+testsymbol.lower()
                             try:
                                 eval(parsestr)
                                 understood = 1
                             except:
                                 understood = 0
-
-                        if not understood: 
+                        
+                        if not understood:
                             parsestr = 'random.'+testsymbol.lower()
                             try:
                                 eval(parsestr)
                                 understood = 1
                             except:
                                 understood = 0
-                            
-                        if not understood:   
+                        
+                        if not understood:
                             if silenterror:
                                 return ''
                             fatal("Error in expression "+arg+": Undefined symbol "+testsymbol)
-
+                        
                         testsymbol = parsestr
                 elif testsymbol[0]=='0' and len(testsymbol)>2 and testsymbol[1]=='b':
                 # binary literal
@@ -340,7 +362,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
                 argcopy += testsymbol
                 testsymbol = ''
             argcopy += c
-
+    
     farg = eval(argcopy)
     if farg >= -.5:
         farg += 0.5
@@ -348,7 +370,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
         farg -= 0.5
     narg = int(farg)
 #    print arg, " -> ",argcopy," == ",narg
-
+    
     if signed:
         if byte:
             if (  -128 < narg > 127):
@@ -362,7 +384,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
         if byte:
             if (  0 < narg > 255):
                 warning ("Unsigned byte value truncated from "+str(narg));
-            narg %= 256    
+            narg %= 256
         elif word:
             if (  0 < narg > 65535):
                 warning ("Unsigned byte value truncated from "+str(narg));
@@ -382,12 +404,12 @@ def double(arg, allow_af_instead_of_sp=0, allow_af_alt=0, allow_index=1):
             rr = ([],'')
     if (rr[1]==4) and not allow_af_alt:
         rr = ([],'')
-        
+    
     if (rr[0] != []) and not allow_index:
         rr = ([],'')
     
     return rr
-    
+
 def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1):
 #decode single register [b,c,d,e,h,l,(hl),a][(ix {+c}),(iy {+c})]
     single_mapping = {'B':0, 'C':1, 'D':2, 'E':3, 'H':4, 'L':5, 'A':7, 'I':8, 'R':9 }
@@ -402,7 +424,7 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1):
     
     if m=='' and re.search("\A\s*\(\s*HL\s*\)\s*\Z", arg):
         m = 6
-        
+    
     if m=='' and allow_index:
         match = re.search("\A\s*\(\s*IX\s*(.*)\s*\)\s*\Z", arg)
         if match:
@@ -415,7 +437,7 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1):
                 if not allow_offset:
                     fatal ("Index register offset not allowed in this instruction")
                 postfix = [parse_expression(offset, byte=1)]
-
+    
     if m=='' and allow_index:
         match = re.search("\A\s*\(\s*IY\s*(.*)\s*\)\s*\Z", arg)
         if match:
@@ -428,7 +450,7 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1):
                 if not allow_offset:
                     fatal ("Index register offset not allowed in this instruction")
                 postfix = [parse_expression(offset, byte=1)]
-        
+    
     return prefix,m,postfix
 
 def condition(arg):
@@ -440,18 +462,18 @@ def condition(arg):
 def dump(bytes):
     def initpage(page):
         memory[page] = array.array('B')
-
+        
         memory[page].append(0)
         while len(memory[page]) < 16384:
             memory[page].extend(memory[page])
-
+    
     global dumppage, dumporigin
     
     if (p==2):
-
+        
         if memory[dumppage]=='':
             initpage(dumppage)
-    
+        
         for b in bytes:
            # if b<0 or b>255:
            #     warning("Dump byte out of range")
@@ -464,7 +486,7 @@ def dump(bytes):
                 
                 if memory[dumppage]=='':
                     initpage(dumppage)
-    
+
 def check_args(args,expected):
     if args=='':
         received = 0
@@ -495,7 +517,7 @@ def op_ORG(p,opargs):
     check_args(opargs,1)
     origin = parse_expression(opargs, word=1)
     return 0
-    
+
 def op_DUMP(p,opargs):
     global dumppage, dumporigin, firstpage, firstpageoffset
     if ',' in opargs:
@@ -509,11 +531,11 @@ def op_DUMP(p,opargs):
             error ("DUMP value out of range")
         dumppage = (offset / 16384) - 1
         dumporigin = offset % 16384
-
+    
     if ((dumppage*16384 + dumporigin) < (firstpage*16384 + firstpageoffset)):
         firstpage = dumppage
         firstpageoffset = dumporigin
-        
+    
     return 0
 
 def op_AUTOEXEC(p,opargs):
@@ -525,7 +547,7 @@ def op_AUTOEXEC(p,opargs):
         autoexecpage = dumppage + 1; # basic type page numbering
         autoexecorigin = dumporigin;
 
-
+    
     return 0
 
 def op_DS(p,opargs):
@@ -545,7 +567,7 @@ def op_DB(p,opargs):
     return op_DEFB(p,opargs)
 def op_DEFB(p,opargs):
     s = opargs.split(',')
-    if (p==2):    
+    if (p==2):
         for b in s:
             byte=(parse_expression(b, byte=1, silenterror=1))
             if byte=='':
@@ -558,7 +580,7 @@ def op_DW(p,opargs):
     return op_DEFW(p,opargs)
 def op_DEFW(p,opargs):
     s = opargs.split(',')
-    if (p==2):    
+    if (p==2):
         for b in s:
             b=(parse_expression(b, word=1))
             dump([b%256, b/256])
@@ -578,12 +600,12 @@ def op_MDAT(p,opargs):
     global dumppage, dumporigin
     match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
     filename = global_path + match.group(1)
-
+    
     try:
         mdatfile = open(filename,'rb')
     except:
         fatal("Unable to open file for reading: "+filename)
-
+    
     mdatfile.seek(0,2)
     filelength = mdatfile.tell()
     if p==1:
@@ -595,17 +617,17 @@ def op_MDAT(p,opargs):
         mdatafilearray = array.array('B')
         mdatafilearray.fromfile(mdatfile, filelength)
         dump(mdatafilearray)
-
+    
     mdatfile.close()
     return filelength
 
 def op_INCLUDE(p,opargs):
     global global_path
-
+    
     savedorigin = origin
     
     match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
-    filename = match.group(1)    
+    filename = match.group(1)
     
     old_path = global_path
     assembler_pass(p, filename)
@@ -622,8 +644,8 @@ def op_FOR(p,opargs):
     for iterate in range(limit):
         symboltable['FOR'] = iterate
         bytes += assemble_instruction(p,args[1].strip())
-
-    return bytes 
+    
+    return bytes
 
 def op_noargs_type(p,opargs,instr):
     check_args(opargs,0)
@@ -698,7 +720,7 @@ def op_CPDR(p,opargs):
 def op_INDR(p,opargs):
     return op_noargs_type(p,opargs,[0xed,0xba])
 def op_OTDR(p,opargs):
-    return op_noargs_type(p,opargs,[0xed,0xbb])   
+    return op_noargs_type(p,opargs,[0xed,0xbb])
 
 def op_register_arg_type(p,opargs,prefix,offset,allow_n=0,ninstr=0,step_per_register=1):
     check_args(opargs,1)
@@ -781,7 +803,7 @@ def op_INC(p,opargs):
 # Oh dear - COMET also used "INC" for INClude source file
     if '"' in opargs:
         return op_INCLUDE(p,opargs)
-
+    
     return op_registerorpair_arg_type(p,opargs, 0x04, 0x03)
 def op_DEC(p,opargs):
     return op_registerorpair_arg_type(p,opargs, 0x05, 0x0b)
@@ -791,7 +813,7 @@ def op_add_type(p,opargs,rinstr,ninstr,rrinstr,step_per_register=1,step_per_pair
     r=''
     
     if len(args) == 2:
-        pre,r,post = single(args[0]) 
+        pre,r,post = single(args[0])
     
     if (len(args) == 1) or r==7:
         pre,r,post = single(args[-1])
@@ -806,17 +828,17 @@ def op_add_type(p,opargs,rinstr,ninstr,rrinstr,step_per_register=1,step_per_pair
         else:
             instr.extend(rinstr)
             instr[-1] += step_per_register*r
-            
+        
         instr.extend(post)
     else:
         pre,rr1 = double(args[0])
         dummy,rr2 = double(args[1])
-    
+        
         if (rr1 == rr2) and (pre != dummy):
             fatal ("Can't mix index registers and HL")
         if (len(rrinstr) > 1) and pre:
             fatal ("Can't use index registers in this instruction")
-    
+        
         if (len(args) != 2) or (rr1 != 2):
             fatal("Invalid argument")
         
@@ -849,7 +871,7 @@ def op_bit_type(p,opargs,offset):
     if (p==2):
         dump(instr)
     return len(instr)
-    
+
 def op_BIT(p,opargs):
     return op_bit_type(p,opargs, 0x40)
 def op_RES(p,opargs):
@@ -858,7 +880,7 @@ def op_SET(p,opargs):
     return op_bit_type(p,opargs, 0xc0)
 
 def op_pushpop_type(p,opargs,offset):
-   
+    
     check_args(opargs,1)
     prefix, rr = double(opargs, allow_af_instead_of_sp=1)
     instr = prefix
@@ -880,16 +902,16 @@ def op_jumpcall_type(p,opargs,offset, condoffset):
     if len(args) == 1:
         instr = [offset]
     else:
-        cond = condition(args[0])  
+        cond = condition(args[0])
         if cond == '':
             fatal ("Expected condition, received "+opargs)
         instr = [condoffset + 8*cond]
-
+    
     if (p==2):
         nn = parse_expression(args[-1],word=1)
         instr.extend([nn%256, nn/256])
         dump(instr)
-
+    
     return 3
 
 def op_JP(p,opargs):
@@ -905,7 +927,7 @@ def op_JP(p,opargs):
 
 def op_CALL(p,opargs):
     return op_jumpcall_type(p,opargs, 0xcd, 0xc4)
-        
+
 def op_DJNZ(p,opargs):
     check_args(opargs,1)
     if (p==2):
@@ -914,7 +936,7 @@ def op_DJNZ(p,opargs):
         if displacement > 127 or displacement < -128:
             fatal ("Displacement from "+str(origin)+" to "+str(target)+" is out of range")
         dump([0x10,(displacement+256)%256])
-
+    
     return 2
 
 def op_JR(p,opargs):
@@ -922,7 +944,7 @@ def op_JR(p,opargs):
     if len(args) == 1:
         instr = 0x18
     else:
-        cond = condition(args[0])  
+        cond = condition(args[0])
         if cond == '':
             fatal ("Expected condition, received "+opargs)
         instr = 0x20 + 8*cond
@@ -932,7 +954,7 @@ def op_JR(p,opargs):
         if displacement > 127 or displacement < -128:
             fatal ("Displacement from "+str(origin)+" to "+str(target)+" is out of range")
         dump([instr,(displacement+256)%256])
-
+    
     return 2
 
 def op_RET(p,opargs):
@@ -947,7 +969,7 @@ def op_RET(p,opargs):
         if (p==2):
             dump([0xc0 + 8*cond])
     return 1
-        
+
 def op_IM(p,opargs):
     check_args(opargs,1)
     if (p==2):
@@ -956,10 +978,10 @@ def op_IM(p,opargs):
             fatal ("argument out of range")
         if mode > 0:
             mode += 1
-    
+        
         dump([0xed, 0x46 + 8*mode])
     return 2
-   
+
 def op_RST(p,opargs):
     check_args(opargs,1)
     if (p==2):
@@ -1007,7 +1029,7 @@ def op_IN(p,opargs):
             match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[1])
             if match==None:
                 fatal("No expression in "+args[1])
-                
+            
             n = parse_expression(match.group(1))
             dump([0xdb, n])
         else:
@@ -1041,19 +1063,19 @@ def op_LD(p,opargs):
             instr.append(0xf9)
             dump(instr)
             return len(instr)
-
+        
         match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", arg2)
         if match:
             # ld rr, (nn)
             if p==2:
                 nn = parse_expression(match.group(1),word=1)
             else:
-                nn = 0    
+                nn = 0
             instr = prefix
             if rr1==2:
-                instr.extend([0x2a, nn%256, nn/256])    
+                instr.extend([0x2a, nn%256, nn/256])
             else:
-                instr.extend([0xed, 0x4b + 16*rr1, nn%256, nn/256])    
+                instr.extend([0xed, 0x4b + 16*rr1, nn%256, nn/256])
             dump(instr)
             return len (instr)
         else:
@@ -1061,12 +1083,12 @@ def op_LD(p,opargs):
             if p==2:
                 nn = parse_expression(arg2,word=1)
             else:
-                nn = 0    
+                nn = 0
             instr = prefix
-            instr.extend([0x01 + 16*rr1, nn%256, nn/256])    
+            instr.extend([0x01 + 16*rr1, nn%256, nn/256])
             dump(instr)
             return len (instr)
-
+    
     prefix, rr2 = double(arg2)
     if rr2 != '':
         match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", arg1)
@@ -1075,15 +1097,15 @@ def op_LD(p,opargs):
             if p==2:
                 nn = parse_expression(match.group(1))
             else:
-                nn = 0    
+                nn = 0
             instr = prefix
             if rr2==2:
-                instr.extend([0x22, nn%256, nn/256])    
+                instr.extend([0x22, nn%256, nn/256])
             else:
-                instr.extend([0xed, 0x43 + 16*rr2, nn%256, nn/256])    
+                instr.extend([0xed, 0x43 + 16*rr2, nn%256, nn/256])
             dump(instr)
             return len (instr)
-       
+    
     prefix1,r1,postfix1 = single(arg1, allow_i=1, allow_r=1)
     prefix2,r2,postfix2 = single(arg2, allow_i=1, allow_r=1)
     if r1 != '' :
@@ -1092,22 +1114,22 @@ def op_LD(p,opargs):
                 if r1==7:
                     if r2==8:
                         dump([0xed,0x57])
-                        return 2                   
+                        return 2
                     elif r2==9:
                         dump([0xed,0x5f])
                         return 2
                 if r2==7:
                     if r1==8:
                         dump([0xed,0x47])
-                        return 2                   
+                        return 2
                     elif r1==9:
                         dump([0xed,0x4f])
                         return 2
                 fatal("Invalid argument")
-
+            
             if r1==6 and r2==6:
                 fatal("Ha - nice try. That's a HALT.")
-                
+            
             instr = prefix1
             instr.extend(prefix2)
             instr.append(0x40 + 8*r1 + r2)
@@ -1115,7 +1137,7 @@ def op_LD(p,opargs):
             instr.extend(postfix2)
             dump(instr)
             return len(instr)
-                   
+        
         else:
             if r1==7 and re.search("\A\s*\(\s*BC\s*\)\s*\Z", arg2):
                 dump([0x0a])
@@ -1128,7 +1150,7 @@ def op_LD(p,opargs):
                 if p==2:
                     nn = parse_expression(match.group(1), word=1)
                     dump([0x3a, nn%256, nn/256])
-                return 3                
+                return 3
             
             instr = prefix1
             instr.append(0x06 + 8*r1)
@@ -1140,7 +1162,7 @@ def op_LD(p,opargs):
             instr.append(n)
             dump(instr)
             return len(instr)
-
+    
     elif r2==7:
         # ld (bc/de/nn),a
         if re.search("\A\s*\(\s*BC\s*\)\s*\Z", arg1):
@@ -1154,19 +1176,19 @@ def op_LD(p,opargs):
             if p==2:
                 nn = parse_expression(match.group(1), word=1)
                 dump([0x32, nn%256, nn/256])
-            return 3                
+            return 3
     fatal("LD args not understood - "+arg1+", "+arg2)
     
     return 1
 
 def assemble_instruction(p, line):
-    opcodeargs = line.split(None,1)  
+    opcodeargs = line.split(None,1)
 # or spilt at first open bracket? Hurrah, let's reimplement a built-in function
     if len(opcodeargs)>1:
         args = opcodeargs[1].strip()
     else:
         args=''
-
+    
     functioncall = 'op_'+opcodeargs[0]+'(p,args)'
     if PYTHONERRORS:
         return eval(functioncall)
@@ -1179,7 +1201,7 @@ def assemble_instruction(p, line):
 def assembler_pass(p, inputfile):
     global memory, symboltable, origin, dumppage, dumporigin, symbol
     global global_currentfile, global_currentline
-# file references are local, so assembler_pass can be called recursively (for op_INC)    
+# file references are local, so assembler_pass can be called recursively (for op_INC)
 # but copied to a global identifier for warning printouts
     global global_path
     
@@ -1187,7 +1209,7 @@ def assembler_pass(p, inputfile):
     global_currentline="0"
     
     # just read the whole file into memory, it's not going to be huge (probably)
-    # I'd prefer not to, but assembler_pass can be called recursively 
+    # I'd prefer not to, but assembler_pass can be called recursively
     # (by op_INCLUDE for example) and fileinput does not support two files simultaneously
     
     this_currentfilename = global_path + inputfile
@@ -1202,21 +1224,21 @@ def assembler_pass(p, inputfile):
             wholefile.append(currentline)
     except:
         fatal("Couldn't open file "+this_currentfilename+" for reading")
-
+    
     currentfile.close()
     
     consider_linenumber=0
-
+    
     for currentline in wholefile:
         consider_linenumber+=1
         global_currentline = currentline
-        global_currentfile = this_currentfilename+":"+repr(consider_linenumber)  
+        global_currentfile = this_currentfilename+":"+repr(consider_linenumber)
             # write these every instruction because an INCLUDE may have overwritten them
-    
+        
         symbol = ''
         opcode = ''
         inquotes = 0
-
+        
         for i in currentline:
             if (i==';' or i=='#') and not inquotes:
                 break
@@ -1224,18 +1246,18 @@ def assembler_pass(p, inputfile):
                 symbol = opcode
                 opcode=''
                 i = ''
-                
+            
             if i == '"':
                 inquotes = not inquotes
                 if lasti == '"':
                 # comet form of " literal
                     i=''
-                
+            
             if inquotes:
                 opcode += i
             else:
                 opcode += i.upper()
-
+            
             lasti = i
         
         symbol = symbol.strip()
@@ -1250,18 +1272,18 @@ def assembler_pass(p, inputfile):
                 symboltable[symbol] = origin
             elif symboltable[symbol] != origin:
                 fatal("Symbol "+symbol+": expected "+str(symboltable[symbol])+" but calculated "+str(origin)+", has this symbol been used twice?")
-                        
+        
         if (opcode):
             bytes = assemble_instruction(p,opcode)
             origin = (origin + bytes) % 65536
 
-
     
 
+
 ###########################################################################
-            
+
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:e', ['version','help'])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:e', ['version','help','nozip'])
 except getopt.GetoptError:
     printusage()
     sys.exit(2)
@@ -1270,6 +1292,7 @@ inputfile = ''
 outputfile = ''
 
 PYTHONERRORS = False
+ZIP = True
 
 listsymbols=[]
 
@@ -1282,29 +1305,32 @@ for option,value in option_args:
     if option in ('--help','-h'):
         printusage()
         sys.exit(0)
-
+    
     if option in ('-o'):
         outputfile=value
-        
+    
     if option in ('-s'):
         listsymbols.append(value)
-
+    
     if option in ('-e'):
         PYTHONERRORS = True # let python do its own error handling
-
     
+    if option in ('--nozip'):
+	    ZIP = False # save the disk image without compression
+    
+
 if len(file_args) == 0:
     print "No input file specified"
     printusage()
     sys.exit(2)
-    
+
 if len(file_args) > 1:
     print "Multiple input files specified"
     printusage()
     sys.exit(2)
 
 inputfile = file_args[0]
-    
+
 if (outputfile == ''):
     outputfile = inputfile.split('/')[-1].split('.')[0] + ".dsk";
 
@@ -1329,15 +1355,15 @@ for initmemorypage in range(32):
 
 for p in 1,2:
     print "pass ",p,"..."
-
+    
     global_path=''
-
+    
     origin = 32768
     dumppage = 1
     dumporigin = 0
     autoexecpage = 0
     autoexecorigin = 0
-
+    
     assembler_pass(p, inputfile)
 
 printsymbols = {}
@@ -1346,7 +1372,7 @@ for symreg in listsymbols:
     for sym in symboltable:
         if re.search(symreg, sym, re.IGNORECASE):
             printsymbols[sym] = symboltable[sym]
-    
+
 if printsymbols != {}:
     print printsymbols
 

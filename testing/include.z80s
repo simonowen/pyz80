@@ -1,0 +1,131 @@
+startwithininclude:
+    NOP
+    RLCA
+    RRCA
+    RLA
+    RRA
+    DAA
+    CPL
+    SCF 
+    CCF
+    DAA
+    HALT
+    DI
+    EI
+    EXX
+    ex af,af'
+    ex de,hl
+    ex (sp),hl
+    NEG
+    RETN
+    RETI
+    RRD
+    RLD
+    LDI
+    CPI
+    INI
+    OUTI
+    LDD
+    CPD
+    IND
+    OUTD
+    LDIR
+    CPIR
+    INIR
+    OTIR
+    LDDR
+    CPDR
+    INDR
+    OTDR
+    RLC b
+    rrc c
+    rl e
+    rr a
+    rr b
+    rr c
+    rr h 
+    SLA a
+    SRA b
+    ADD a,c
+    add d
+    add hl,de
+    ADc a,c
+    adc d
+    adc hl,de
+    sbc a,c
+    sbc d
+    sbc hl,de
+    bit 7,e
+    res 6,d
+    set 5,c
+    inc a
+    dec b
+    and l
+    and 17
+    xor a
+    xor 31
+    or e
+    or 93
+    cp e
+    cp 3
+    sub c
+    sub 31
+    pop hl
+    push de
+startjumps:
+    jp label1 
+    jp (hl)
+    call label1
+label1:
+    jr label1
+    djnz label1
+    
+    ret
+    im 0
+    im 1
+    im 2
+    rst 16
+    in e,(c)
+    in a,(77)
+    out (c),d
+    out (47),a
+    
+    ld a,i
+    ld i,a
+    ld a,r
+    ld r,a
+    
+    
+    rl (iy+4)
+    rr (ix+89)
+    SLA (ix) 
+    SRA (ix+1) 
+    
+    ADD a,(iy+8)
+    add iy,de
+    
+    bit 7,(iy+4)
+    res 6,(ix+2)
+    set 5,(ix+9)
+    
+    inc (ix+8) 
+    dec (iy+3)
+    inc ix
+    and (iy+12)
+    xor (ix+12)
+    pop ix
+    
+    jp (ix)
+    
+    
+    ld (12345),ix
+    
+    add ix,ix
+    add ix,de 
+    
+    ld (hl),a
+    ld (ix+1),a
+    ld (ix-127),3
+    
+endwithininclude:
+lengthwithininclude: equ endwithininclude - startwithininclude
