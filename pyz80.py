@@ -10,11 +10,13 @@ def printusage():
     print "   save the resulting disk image at the given path"
     print "-s regexp"
     print "   print the value of any symbols matching the given regular expression"
-    print "   This may be specified multiple times to output more than one subset"
+    print "   This may be used multiple times to output more than one subset"
     print "--nozip"
     print "   do not compress the resulting disk image"
     print "-e"
     print "   use python's own error handling instead of trying to catch parse errors"
+    print "--case"
+    print "   treat source labels as case sensitive (as COMET itself did)"
 
 def printlicense():
     print "This program is free software; you can redistribute it and/or modify"
@@ -33,9 +35,10 @@ def printlicense():
 
 # CHANGELOG
 
-# version 1.0
+# changes since last release
 #
 # - option to not gzip the disk image
+# - option to treat labels as case sensitive (as COMET itself does)
 # - better package with documentation and test sources
 
 # version 0.6 10-Feb-2006
@@ -89,7 +92,7 @@ def printlicense():
 # PLANNED CHANGES BEFORE VERSION 1.0
 # 
 # - undocumented instructions on low and high bytes of index registers
-# - COMET labels are case insensitive
+
 # - option to include other files on the resulting disk image
 
 
@@ -301,7 +304,6 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     
     arg = arg.replace('0X','0x') # darnit, this got capitalized
     arg = arg.replace('0B','0b') # darnit, this got capitalized
-    
             
 
 # if the argument contains letters at this point,
@@ -394,7 +396,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
 def double(arg, allow_af_instead_of_sp=0, allow_af_alt=0, allow_index=1):
 # decode double register [bc, de, hl, sp][ix,iy] --special:  af af'
     double_mapping = {'BC':([],0), 'DE':([],1), 'HL':([],2), 'SP':([],3), 'IX':([0xdd],2), 'IY':([0xfd],2), 'AF':([],5), "AF'":([],4) }
-    rr = double_mapping.get(arg.strip(),([],''))
+    rr = double_mapping.get(arg.strip().upper(),([],''))
     if (rr[1]==3) and allow_af_instead_of_sp:
         rr = ([],'')
     if rr[1]==5:
@@ -413,7 +415,7 @@ def double(arg, allow_af_instead_of_sp=0, allow_af_alt=0, allow_index=1):
 def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1):
 #decode single register [b,c,d,e,h,l,(hl),a][(ix {+c}),(iy {+c})]
     single_mapping = {'B':0, 'C':1, 'D':2, 'E':3, 'H':4, 'L':5, 'A':7, 'I':8, 'R':9 }
-    m = single_mapping.get(arg.strip(),'')
+    m = single_mapping.get(arg.strip().upper(),'')
     prefix=[]
     postfix=[]
     
@@ -422,11 +424,11 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1):
     if m==9 and not allow_r:
         m = ''
     
-    if m=='' and re.search("\A\s*\(\s*HL\s*\)\s*\Z", arg):
+    if m=='' and re.search("\A\s*\(\s*HL\s*\)\s*\Z", arg, re.IGNORECASE):
         m = 6
     
     if m=='' and allow_index:
-        match = re.search("\A\s*\(\s*IX\s*(.*)\s*\)\s*\Z", arg)
+        match = re.search("\A\s*\(\s*IX\s*(.*)\s*\)\s*\Z", arg, re.IGNORECASE)
         if match:
             m = 6
             prefix = [0xdd]
@@ -439,7 +441,7 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1):
                 postfix = [parse_expression(offset, byte=1)]
     
     if m=='' and allow_index:
-        match = re.search("\A\s*\(\s*IY\s*(.*)\s*\)\s*\Z", arg)
+        match = re.search("\A\s*\(\s*IY\s*(.*)\s*\)\s*\Z", arg, re.IGNORECASE)
         if match:
             m = 6
             prefix = [0xfd]
@@ -456,7 +458,7 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1):
 def condition(arg):
 # decode condition [nz, z, nc, c, po, pe, p, m]
     condition_mapping = {'NZ':0, 'Z':1, 'NC':2, 'C':3, 'PO':4, 'PE':5, 'P':6, 'M':7 }
-    return condition_mapping.get(arg,'')
+    return condition_mapping.get(arg.upper(),'')
 
 
 def dump(bytes):
@@ -643,6 +645,7 @@ def op_FOR(p,opargs):
     bytes = 0
     for iterate in range(limit):
         symboltable['FOR'] = iterate
+        symboltable['for'] = iterate
         bytes += assemble_instruction(p,args[1].strip())
     
     return bytes
@@ -1007,7 +1010,7 @@ def op_EX(p,opargs):
         instr.append(0xeb)
     elif (rr1==3 and rr2==4):
         instr=[0x08]
-    elif rr2==2 and re.search("\A\s*\(\s*SP\s*\)\s*\Z", args[0]):
+    elif rr2==2 and re.search("\A\s*\(\s*SP\s*\)\s*\Z", args[0], re.IGNORECASE):
         instr = pre2
         instr.append(0xe3)
     else:
@@ -1023,7 +1026,7 @@ def op_IN(p,opargs):
     args = opargs.split(',',1)
     if (p==2):
         pre,r,post = single(args[0])
-        if r!='' and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[1]):
+        if r!='' and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[1], re.IGNORECASE):
             dump([0xed, 0x40+8*r])
         elif r==7:
             match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[1])
@@ -1041,7 +1044,7 @@ def op_OUT(p,opargs):
     args = opargs.split(',',1)
     if (p==2):
         pre,r,post = single(args[1])
-        if r!='' and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[0]):
+        if r!='' and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[0], re.IGNORECASE):
             dump([0xed, 0x41+8*r])
         elif r==7:
             match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[0])
@@ -1139,10 +1142,10 @@ def op_LD(p,opargs):
             return len(instr)
         
         else:
-            if r1==7 and re.search("\A\s*\(\s*BC\s*\)\s*\Z", arg2):
+            if r1==7 and re.search("\A\s*\(\s*BC\s*\)\s*\Z", arg2, re.IGNORECASE):
                 dump([0x0a])
                 return 1
-            if r1==7 and re.search("\A\s*\(\s*DE\s*\)\s*\Z", arg2):
+            if r1==7 and re.search("\A\s*\(\s*DE\s*\)\s*\Z", arg2, re.IGNORECASE):
                 dump([0x1a])
                 return 1
             match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", arg2)
@@ -1165,10 +1168,10 @@ def op_LD(p,opargs):
     
     elif r2==7:
         # ld (bc/de/nn),a
-        if re.search("\A\s*\(\s*BC\s*\)\s*\Z", arg1):
+        if re.search("\A\s*\(\s*BC\s*\)\s*\Z", arg1, re.IGNORECASE):
             dump([0x02])
             return 1
-        if re.search("\A\s*\(\s*DE\s*\)\s*\Z", arg1):
+        if re.search("\A\s*\(\s*DE\s*\)\s*\Z", arg1, re.IGNORECASE):
             dump([0x12])
             return 1
         match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", arg1)
@@ -1189,7 +1192,7 @@ def assemble_instruction(p, line):
     else:
         args=''
     
-    functioncall = 'op_'+opcodeargs[0]+'(p,args)'
+    functioncall = 'op_'+opcodeargs[0].upper()+'(p,args)'
     if PYTHONERRORS:
         return eval(functioncall)
     else:
@@ -1253,7 +1256,7 @@ def assembler_pass(p, inputfile):
                 # comet form of " literal
                     i=''
             
-            if inquotes:
+            if inquotes or CASE:
                 opcode += i
             else:
                 opcode += i.upper()
@@ -1267,7 +1270,7 @@ def assembler_pass(p, inputfile):
         if ' ' in symbol:
             fatal("Whitespace not allowed in symbol name")
         
-        if (symbol and (opcode[0:3]!="EQU")):
+        if (symbol and (opcode[0:3].upper() !="EQU")):
             if p==1:
                 symboltable[symbol] = origin
             elif symboltable[symbol] != origin:
@@ -1283,7 +1286,7 @@ def assembler_pass(p, inputfile):
 ###########################################################################
 
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:e', ['version','help','nozip'])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:e', ['version','help','nozip','case'])
 except getopt.GetoptError:
     printusage()
     sys.exit(2)
@@ -1293,6 +1296,7 @@ outputfile = ''
 
 PYTHONERRORS = False
 ZIP = True
+CASE = False
 
 listsymbols=[]
 
@@ -1318,6 +1322,8 @@ for option,value in option_args:
     if option in ('--nozip'):
 	    ZIP = False # save the disk image without compression
     
+    if option in ('--case'):
+        CASE = True
 
 if len(file_args) == 0:
     print "No input file specified"

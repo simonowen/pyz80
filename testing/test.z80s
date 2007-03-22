@@ -9,7 +9,11 @@ withoutspace:
 
     ld (0),de
     ld (0), de
-    
+    ld (0), DE
+
+    xor a
+
+
     db -1
     db 0
     dw -1
@@ -38,7 +42,7 @@ includelength: equ includeend - includestart
     defb 0
     DB 1
     DB 8
-    DEFB 08, 01, 00, 0, 1
+    DEFB 08, 01, 00, 0, 1, 0xab, 0b01110100
     defb "A"
     defm ","
     
