@@ -78,5 +78,23 @@ testoffset5:
 ; CASEINSENSITIVE:
 ;	dw caseinsensitive
 	
-
+	ld c,4
+@2:	ld b,30
+@:  outi
+    djnz @
+    dec c
+    jr nz,@2
     
+@b: jr @+a
+        
+@a: jr @-b     
+        
+@:  jr @+c
+     
+@d: jr @+d
+
+@c: jr @-d         
+     
+@d: jr @c
+ 
+ 

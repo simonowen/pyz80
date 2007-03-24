@@ -44,6 +44,8 @@ def printlicense():
 # - option to not gzip the disk image
 # - option to treat labels as case sensitive (as COMET itself does)
 # - better package with documentation and test sources
+# - "local" symbols starting with the @ character do not need to be unique; use them for the beginning of loops, for example. 
+#   Any references to them will go to the nearest in the same file (or use @+ and @- for always the next or previous respectively)
 
 # version 0.6 10-Feb-2006
 #
@@ -98,6 +100,7 @@ def printlicense():
 # - option to include other files on the resulting disk image
 # - support for "compound" instructions such as RLC r,(IX+c)
 # - IF, ELSE (IF), ENDIF pseudo-opcodes
+
 
 
 import getopt
@@ -287,6 +290,51 @@ def fatal(message):
     print global_currentfile,'"'+global_currentline.strip()+'"'
     sys.exit(1)
 
+def set_symbol(sym, value):
+    if sym[0]=='@':
+        sym = sym + '@' + global_currentfile
+
+    symboltable[sym] = value 
+
+
+def get_symbol(sym):
+    if sym[0]=='@':
+        if symboltable.has_key(sym + '@' + global_currentfile):
+            return symboltable[sym + '@' + global_currentfile]
+        else:
+            if len(sym) > 1 and (sym[1]=='-' or sym[1]=='+'):
+                directive = sym[1]
+                sym = sym[0]+sym[2:]
+            else:
+                directive=''
+            
+            reqfile,reqline = global_currentfile.split(':')
+            reqline = int(reqline)
+ 
+            closestKey = None
+            
+            for key in symboltable:
+                if key.startswith(sym+'@'+reqfile+":"):
+                    symfile,symline = key.split(':')
+                    symline=int(symline)
+                    
+                    difference = reqline - symline
+                    
+                    if (difference < 0 or directive != '+') and (difference > 0 or directive != '-') and ((closestKey == None) or (abs(difference) < closest)):
+                        closest = abs(difference)
+                        closestKey = key
+            if closestKey != None:
+                sym = closestKey
+    
+    
+    if symboltable.has_key(sym):
+        return symboltable[sym]
+    
+    return None
+
+
+
+
 def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     if ',' in arg:
         if silenterror:
@@ -315,13 +363,14 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     testsymbol=''
     argcopy = ''
     for c in arg+' ':
-        if c.isalnum() or c=="_" or c==".":
+        if c.isalnum() or c=="_" or c=="." or (c=="@" and testsymbol=='') or (c=="+" and testsymbol=='@') or (c=="-" and testsymbol=='@'):
             testsymbol += c
         else:
             if (testsymbol != ''):
                 if not testsymbol[0].isdigit():
-                    if (symboltable.has_key(testsymbol)):
-                        testsymbol = str(symboltable[testsymbol])
+                    result = get_symbol(testsymbol)
+                    if (result != None):
+                        testsymbol = str(result)
                     else:
                         understood = 0
                         # some of python's math expressions should be available to the parser
@@ -522,14 +571,16 @@ def op_EQU(p,opargs):
     check_args(opargs,1)
     if (symbol):
         if p==1:
-            symboltable[symbol] = parse_expression(opargs, signed=1, silenterror=1)
+            set_symbol(symbol, parse_expression(opargs, signed=1, silenterror=1))
         else:
             expr_result = parse_expression(opargs, signed=1)
             
-            if symboltable[symbol] == '':
-                symboltable[symbol] = expr_result
-            elif symboltable[symbol] != parse_expression(opargs, signed=1):
-                fatal("Symbol "+symbol+": expected "+str(symboltable[symbol])+" but calculated "+str(parse_expression(opargs, signed=1))+", has this symbol been used twice?")
+            existing = get_symbol(symbol)
+            
+            if existing == '':
+                set_symbol(symbol, expr_result)
+            elif existing != parse_expression(opargs, signed=1):
+                fatal("Symbol "+symbol+": expected "+str(existing)+" but calculated "+str(parse_expression(opargs, signed=1))+", has this symbol been used twice?")
     else:
         warning("EQU without symbol name")
     return 0
@@ -1310,15 +1361,15 @@ def assembler_pass(p, inputfile):
         
         if (symbol and (opcode[0:3].upper() !="EQU")):
             if p==1:
-                symboltable[symbol] = origin
-            elif symboltable[symbol] != origin:
-                fatal("Symbol "+symbol+": expected "+str(symboltable[symbol])+" but calculated "+str(origin)+", has this symbol been used twice?")
+                set_symbol(symbol, origin)
+            elif get_symbol(symbol) != origin:
+                fatal("Symbol "+symbol+": expected "+str(get_symbol(symbol))+" but calculated "+str(origin)+", has this symbol been used twice?")
         
         if (opcode):
             bytes = assemble_instruction(p,opcode)
             origin = (origin + bytes) % 65536
 
-    
+
 
 
 ###########################################################################
