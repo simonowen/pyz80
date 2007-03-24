@@ -70,13 +70,13 @@ testoffset4:
 
 testoffset5:
     
-;    ld ixl,4
+    ld ixl,4
     
 
-caseinsensitive:
-	dw CASEINSENSITIVE
-CASEINSENSITIVE:
-	dw caseinsensitive
+; caseinsensitive:
+;	dw CASEINSENSITIVE
+; CASEINSENSITIVE:
+;	dw caseinsensitive
 	
 
     

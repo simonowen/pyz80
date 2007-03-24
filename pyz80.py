@@ -17,6 +17,9 @@ def printusage():
     print "   use python's own error handling instead of trying to catch parse errors"
     print "--case"
     print "   treat source labels as case sensitive (as COMET itself did)"
+    print "-D symbol=value"
+    print "   Define a symbol before parseing the source"
+    print "   (value is integer; if omitted, assume 1)"
 
 def printlicense():
     print "This program is free software; you can redistribute it and/or modify"
@@ -37,6 +40,7 @@ def printlicense():
 
 # changes since last release
 #
+# - IXh, IXl, IYh and IYl can be used in operands where this forms a valid (undocumented) instruction
 # - option to not gzip the disk image
 # - option to treat labels as case sensitive (as COMET itself does)
 # - better package with documentation and test sources
@@ -91,10 +95,9 @@ def printlicense():
 
 # PLANNED CHANGES BEFORE VERSION 1.0
 # 
-# - undocumented instructions on low and high bytes of index registers
-
 # - option to include other files on the resulting disk image
-
+# - support for "compound" instructions such as RLC r,(IX+c)
+# - IF, ELSE (IF), ENDIF pseudo-opcodes
 
 
 import getopt
@@ -412,9 +415,9 @@ def double(arg, allow_af_instead_of_sp=0, allow_af_alt=0, allow_index=1):
     
     return rr
 
-def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1):
+def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=1):
 #decode single register [b,c,d,e,h,l,(hl),a][(ix {+c}),(iy {+c})]
-    single_mapping = {'B':0, 'C':1, 'D':2, 'E':3, 'H':4, 'L':5, 'A':7, 'I':8, 'R':9 }
+    single_mapping = {'B':0, 'C':1, 'D':2, 'E':3, 'H':4, 'L':5, 'A':7, 'I':8, 'R':9, 'IXH':10, 'IXL':11, 'IYH':12, 'IYL':13 }
     m = single_mapping.get(arg.strip().upper(),'')
     prefix=[]
     postfix=[]
@@ -423,6 +426,23 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1):
         m = ''
     if m==9 and not allow_r:
         m = ''
+ 
+    if allow_half:
+        if m==10:
+            prefix = [0xdd]
+            m = 4
+        if m==11:
+            prefix = [0xdd]
+            m = 5
+        if m==12:
+            prefix = [0xfd]
+            m = 4
+        if m==13:
+            prefix = [0xfd]
+            m = 5
+    else:
+        if m >= 10 and m <= 13:
+            m = '' 
     
     if m=='' and re.search("\A\s*\(\s*HL\s*\)\s*\Z", arg, re.IGNORECASE):
         m = 6
@@ -645,7 +665,8 @@ def op_FOR(p,opargs):
     bytes = 0
     for iterate in range(limit):
         symboltable['FOR'] = iterate
-        symboltable['for'] = iterate
+        if CASE:
+            symboltable['for'] = iterate
         bytes += assemble_instruction(p,args[1].strip())
     
     return bytes
@@ -725,16 +746,53 @@ def op_INDR(p,opargs):
 def op_OTDR(p,opargs):
     return op_noargs_type(p,opargs,[0xed,0xbb])
 
-def op_register_arg_type(p,opargs,prefix,offset,allow_n=0,ninstr=0,step_per_register=1):
-    check_args(opargs,1)
-    pre,r,post = single(opargs)
-    instr = pre
-    instr.extend(prefix)
-    if prefix:
+def op_cbshifts_type(p,opargs,offset,step_per_register=1):
+    args = opargs.split(',',1)
+    if len(args) == 2:
+        # composite instruction of the form RLC
+        error("Composite instructions not yet supportted")
+    else:
+        check_args(opargs,1)
+        pre,r,post = single(opargs,allow_half=0)
+        instr = pre
+        instr.extend([0xcb])
         instr.extend(post)
-    if r=='':
-        if allow_n == 0:
+        if r=='':
             fatal ("Invalid argument")
+        else:
+            instr.append(offset + step_per_register*r)
+        if (p==2):
+            dump(instr)
+        return len(instr)
+
+def op_RLC(p,opargs):
+    return op_cbshifts_type(p,opargs,0x00)
+def op_RRC(p,opargs):
+    return op_cbshifts_type(p,opargs,0x08)
+def op_RL(p,opargs):
+    return op_cbshifts_type(p,opargs,0x10)
+def op_RR(p,opargs):
+    return op_cbshifts_type(p,opargs,0x18)
+def op_SLA(p,opargs):
+    return op_cbshifts_type(p,opargs,0x20)
+def op_SRA(p,opargs):
+    return op_cbshifts_type(p,opargs,0x28)
+def op_SLL(p,opargs):
+    if (p==1):
+        warning("SLL doesn't do what you probably expect on z80b! Use SL1 if you know what you're doing.")
+    return op_cbshifts_type(p,opargs,0x30)
+def op_SL1(p,opargs):
+    return op_cbshifts_type(p,opargs,0x30)
+def op_SRL(p,opargs):
+    return op_cbshifts_type(p,opargs,0x38)
+
+
+
+def op_register_arg_type(p,opargs,offset,ninstr,step_per_register=1):
+    check_args(opargs,1)
+    pre,r,post = single(opargs,allow_half=1)
+    instr = pre
+    if r=='':
         instr.extend(ninstr)
         if (p==2):
             n = parse_expression(opargs, byte=1)
@@ -743,43 +801,21 @@ def op_register_arg_type(p,opargs,prefix,offset,allow_n=0,ninstr=0,step_per_regi
         instr.append(n)
     else:
         instr.append(offset + step_per_register*r)
-    if not prefix:
-        instr.extend(post)
+    instr.extend(post)
     if (p==2):
         dump(instr)
     return len(instr)
 
-def op_RLC(p,opargs):
-    return op_register_arg_type(p,opargs,[0xcb], 0x00)
-def op_RRC(p,opargs):
-    return op_register_arg_type(p,opargs,[0xcb], 0x08)
-def op_RL(p,opargs):
-    return op_register_arg_type(p,opargs,[0xcb], 0x10)
-def op_RR(p,opargs):
-    return op_register_arg_type(p,opargs,[0xcb], 0x18)
-def op_SLA(p,opargs):
-    return op_register_arg_type(p,opargs,[0xcb], 0x20)
-def op_SRA(p,opargs):
-    return op_register_arg_type(p,opargs,[0xcb], 0x28)
-def op_SLL(p,opargs):
-    if (p==1):
-        warning("SLL doesn't do what you probably expect on z80b! Use SL1 if you know what you're doing.")
-    return op_register_arg_type(p,opargs,[0xcb], 0x30)
-def op_SL1(p,opargs):
-    return op_register_arg_type(p,opargs,[0xcb], 0x30)
-def op_SRL(p,opargs):
-    return op_register_arg_type(p,opargs,[0xcb], 0x38)
-
 def op_SUB(p,opargs):
-    return op_register_arg_type(p,opargs,[], 0x90, allow_n=1, ninstr=[0xd6])
+    return op_register_arg_type(p,opargs, 0x90, [0xd6])
 def op_AND(p,opargs):
-    return op_register_arg_type(p,opargs,[], 0xa0, allow_n=1, ninstr=[0xe6])
+    return op_register_arg_type(p,opargs, 0xa0, [0xe6])
 def op_XOR(p,opargs):
-    return op_register_arg_type(p,opargs,[], 0xa8, allow_n=1, ninstr=[0xee])
+    return op_register_arg_type(p,opargs, 0xa8, [0xee])
 def op_OR(p,opargs):
-    return op_register_arg_type(p,opargs,[], 0xb0, allow_n=1, ninstr=[0xf6])
+    return op_register_arg_type(p,opargs, 0xb0, [0xf6])
 def op_CP(p,opargs):
-    return op_register_arg_type(p,opargs,[], 0xb8, allow_n=1, ninstr=[0xfe])
+    return op_register_arg_type(p,opargs, 0xb8, [0xfe])
 
 def op_registerorpair_arg_type(p,opargs,rinstr,rrinstr,step_per_register=8,step_per_pair=16):
     check_args(opargs,1)
@@ -791,12 +827,10 @@ def op_registerorpair_arg_type(p,opargs,rinstr,rrinstr,step_per_register=8,step_
             fatal ("Invalid argument")
         
         instr = pre
-        instr.append(rrinstr)
-        instr[-1] += step_per_pair*rr
+        instr.append(rrinstr + step_per_pair*rr)
     else:
         instr = pre
-        instr.append(rinstr)
-        instr[-1] += step_per_register*r
+        instr.append(rinstr + step_per_register*r)
         instr.extend(post)
     if (p==2):
         dump(instr)
@@ -866,7 +900,7 @@ def op_bit_type(p,opargs,offset):
     b = parse_expression(arg1)
     if b>7 or b<0:
         fatal ("argument out of range")
-    pre,r,post = single(arg2)
+    pre,r,post = single(arg2,allow_half=0)
     instr = pre
     instr.append(0xcb)
     instr.extend(post)
@@ -919,7 +953,7 @@ def op_jumpcall_type(p,opargs,offset, condoffset):
 
 def op_JP(p,opargs):
     if (len(opargs.split(',',1)) == 1):
-        prefix, r, postfix = single(opargs, allow_offset=0)
+        prefix, r, postfix = single(opargs, allow_offset=0,allow_half=0)
         if r==6:
             instr = prefix
             instr.append(0xe9)
@@ -1025,7 +1059,7 @@ def op_IN(p,opargs):
     check_args(opargs,2)
     args = opargs.split(',',1)
     if (p==2):
-        pre,r,post = single(args[0])
+        pre,r,post = single(args[0],allow_index=0,allow_half=0)
         if r!='' and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[1], re.IGNORECASE):
             dump([0xed, 0x40+8*r])
         elif r==7:
@@ -1043,7 +1077,7 @@ def op_OUT(p,opargs):
     check_args(opargs,2)
     args = opargs.split(',',1)
     if (p==2):
-        pre,r,post = single(args[1])
+        pre,r,post = single(args[1],allow_index=0,allow_half=0)
         if r!='' and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[0], re.IGNORECASE):
             dump([0xed, 0x41+8*r])
         elif r==7:
@@ -1133,8 +1167,12 @@ def op_LD(p,opargs):
             if r1==6 and r2==6:
                 fatal("Ha - nice try. That's a HALT.")
             
+            if (r1==4 or r1==5) and (r2==4 or r2==5) and prefix1 != prefix2:
+                fatal("Illegal combination of operands")
+            
             instr = prefix1
-            instr.extend(prefix2)
+            if len(prefix1) == 0:
+                instr.extend(prefix2)
             instr.append(0x40 + 8*r1 + r2)
             instr.extend(postfix1)
             instr.extend(postfix2)
@@ -1286,7 +1324,7 @@ def assembler_pass(p, inputfile):
 ###########################################################################
 
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:e', ['version','help','nozip','case'])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:', ['version','help','nozip','case'])
 except getopt.GetoptError:
     printusage()
     sys.exit(2)
@@ -1299,6 +1337,7 @@ ZIP = True
 CASE = False
 
 listsymbols=[]
+predefsymbols=[]
 
 for option,value in option_args:
     if option in ('--version'):
@@ -1325,6 +1364,9 @@ for option,value in option_args:
     if option in ('--case'):
         CASE = True
 
+    if option in ('-D'):
+        predefsymbols.append(value)
+
 if len(file_args) == 0:
     print "No input file specified"
     printusage()
@@ -1348,9 +1390,26 @@ if inputfile == outputfile:
     printusage()
     sys.exit(2)
 
-
 symboltable = {}
 memory = []
+
+for value in predefsymbols:
+    sym=value.split('=',1)
+    if len(sym)==1:
+        sym.append("1")
+    if not CASE:
+        sym[0]=sym[0].upper()
+    if PYTHONERRORS:
+        val = int(sym[1])
+    else:
+        try:
+            val = int(sym[1])
+        except:
+            print("Error: Invalid value for symbol predefined on command line, "+value)
+            sys.exit(1)
+    
+    symboltable[sym[0]]=int(sym[1])
+
 
 firstpage=32
 firstpageoffset=16384
