@@ -46,6 +46,9 @@ def printlicense():
 # - better package with documentation and test sources
 # - "local" symbols starting with the @ character do not need to be unique; use them for the beginning of loops, for example. 
 #   Any references to them will go to the nearest in the same file (or use @+ and @- for always the next or previous respectively)
+# - IF, ELSE (IF), ENDIF pseudo-opcodes
+# - defined(symbol) tests whether a symbol exists
+# - option to predefine symbols from the pyz80 command line
 
 # version 0.6 10-Feb-2006
 #
@@ -99,7 +102,6 @@ def printlicense():
 # 
 # - option to include other files on the resulting disk image
 # - support for "compound" instructions such as RLC r,(IX+c)
-# - IF, ELSE (IF), ENDIF pseudo-opcodes
 
 
 
@@ -342,11 +344,21 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
         fatal("Erroneous comma in expression"+arg)
     
     while 1:
-    	match = re.search('"(.)"', arg)
+        match = re.search('"(.)"', arg)
         if match:
             arg = arg.replace('"'+match.group(1)+'"',str(ord(match.group(1))))
         else:
             break
+
+    while 1:
+        match = re.search('defined\s*\(\s*(.*)\s*\)', arg, re.IGNORECASE)
+        if match:
+            result = (get_symbol(match.group(1)) != None)
+            arg = arg.replace(match.group(0),str(int(result)))
+            
+        else:
+            break
+
     
     arg = arg.replace('$','('+str(origin)+')')
     arg = arg.replace('%','0b') # COMET syntax for binary literals (parsed later, change to save confusion with modulus)
@@ -1273,6 +1285,54 @@ def op_LD(p,opargs):
     
     return 1
 
+#ifstate=0: parse all code
+#ifstate=1: parse this code, but stop at ELSE
+#ifstate=2: do not parse this code, but might start at ELSE
+#ifstate=3: do not parse any code until ENDIF
+
+def op_IF(p,opargs):
+    global ifstate, ifstack
+    check_args(opargs,1)
+    
+    ifstack.append( (global_currentfile,ifstate) )
+    if ifstate < 2:
+        cond = parse_expression(opargs)
+        if cond:
+            ifstate = 1
+        else:
+            ifstate = 2
+    else:
+        ifstate = 3
+    return 0
+
+def op_ELSE(p,opargs):
+    global ifstate, ifstack
+    if ifstate==1 or ifstate==3:
+        ifstate = 3
+    elif ifstate==2:
+        if opargs.upper().startswith("IF"):
+            cond = parse_expression(opargs[2:].strip())
+            if cond:
+                ifstate = 1
+            else:
+                ifstate = 2
+    else:
+        fatal("Mismatched ELSE")
+
+    return 0
+
+def op_ENDIF(p,opargs):
+    global ifstate, ifstack
+    check_args(opargs,0)
+
+    if len(ifstack) == 0:
+        fatal("Mismatched ENDIF")
+
+    ifline,state = ifstack.pop()
+    ifstate = state
+    
+    return 0
+
 def assemble_instruction(p, line):
     opcodeargs = line.split(None,1)
 # or spilt at first open bracket? Hurrah, let's reimplement a built-in function
@@ -1281,14 +1341,18 @@ def assemble_instruction(p, line):
     else:
         args=''
     
-    functioncall = 'op_'+opcodeargs[0].upper()+'(p,args)'
-    if PYTHONERRORS:
-        return eval(functioncall)
-    else:
-        try:
+    inst = opcodeargs[0].upper()
+    if (ifstate < 2) or inst=='IF' or inst=='ELSE' or inst=='ENDIF':
+        functioncall = 'op_'+inst+'(p,args)'
+        if PYTHONERRORS:
             return eval(functioncall)
-        except:
-            fatal("OpCode not recognised")
+        else:
+            try:
+                return eval(functioncall)
+            except:
+                fatal("OpCode not recognised")
+    else:
+        return 0
 
 def assembler_pass(p, inputfile):
     global memory, symboltable, origin, dumppage, dumporigin, symbol
@@ -1359,7 +1423,7 @@ def assembler_pass(p, inputfile):
         if ' ' in symbol:
             fatal("Whitespace not allowed in symbol name")
         
-        if (symbol and (opcode[0:3].upper() !="EQU")):
+        if (symbol and (opcode[0:3].upper() !="EQU") and (ifstate < 2)):
             if p==1:
                 set_symbol(symbol, origin)
             elif get_symbol(symbol) != origin:
@@ -1443,6 +1507,8 @@ if inputfile == outputfile:
 
 symboltable = {}
 memory = []
+ifstack = []
+ifstate = 0
 
 for value in predefsymbols:
     sym=value.split('=',1)
@@ -1481,6 +1547,12 @@ for p in 1,2:
     autoexecorigin = 0
     
     assembler_pass(p, inputfile)
+
+if len(ifstack) > 0:
+    print("Error: Mismatched IF and ENDIF statements, too many IF")
+    for item in ifstack:
+        print item[0]
+    sys.exit(1)
 
 printsymbols = {}
 for symreg in listsymbols:

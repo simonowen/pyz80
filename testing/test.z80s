@@ -66,7 +66,11 @@ testoffset3:
 
 testoffset4:
    
-    sll a
+    if defined(DEBUG)
+        sll a
+    else
+        sl1 a
+    endif
 
 testoffset5:
     
@@ -96,5 +100,5 @@ testoffset5:
 @c: jr @-d         
      
 @d: jr @c
- 
- 
+
+
