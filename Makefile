@@ -38,10 +38,11 @@ $(OUTDIR)/COPYING: COPYING
 
 
 
-test testing.z80s:
+test: testing/test.z80s testing/include.z80s
 	./pyz80.py -o test.dsk.gz -s . testing/test.z80s
 	cp testing/golden.dsk.gz golden.dsk.gz
-	gunzip test.dsk.gz golden.dsk.gz
+	gunzip -f test.dsk.gz golden.dsk.gz
 	cmp test.dsk golden.dsk
 	@echo --== TESTING COMPLETED OK ==--
-	
+
+

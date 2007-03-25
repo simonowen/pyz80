@@ -13,6 +13,11 @@ withoutspace:
 
     xor a
 
+    sra a,(IY+3)
+    sl1 b,(ix+4)
+    rlc c,(iy-17)
+    rrc d,(ix+65)
+
 
     db -1
     db 0
@@ -102,3 +107,4 @@ testoffset5:
 @d: jr @c
 
 
+    

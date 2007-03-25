@@ -812,8 +812,21 @@ def op_OTDR(p,opargs):
 def op_cbshifts_type(p,opargs,offset,step_per_register=1):
     args = opargs.split(',',1)
     if len(args) == 2:
-        # composite instruction of the form RLC
-        error("Composite instructions not yet supportted")
+        # compound instruction of the form RLC B,(IX+c)
+        pre1,r1,post1 = single(args[0], allow_half=0, allow_index=0)
+        pre2,r2,post2 = single(args[1], allow_half=0, allow_index=1)
+        if r1=='' or r2=='':
+            fatal("Registers not recognized for compound instruction")
+        if r1==6:
+            fatal("(HL) not allowed as target of compound instruction")
+        if len(pre2)==0:
+            fatal("Must use index register as operand of compound instruction")
+                
+        instr=pre2
+        instr.extend([0xcb])
+        instr.extend(post2)
+        instr.append(offset + step_per_register*r1)
+        
     else:
         check_args(opargs,1)
         pre,r,post = single(opargs,allow_half=0)
@@ -824,9 +837,10 @@ def op_cbshifts_type(p,opargs,offset,step_per_register=1):
             fatal ("Invalid argument")
         else:
             instr.append(offset + step_per_register*r)
-        if (p==2):
-            dump(instr)
-        return len(instr)
+
+    if (p==2):
+        dump(instr)
+    return len(instr)
 
 def op_RLC(p,opargs):
     return op_cbshifts_type(p,opargs,0x00)
