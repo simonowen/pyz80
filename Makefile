@@ -9,8 +9,8 @@ OUTDIR = pyz80-release
 OUTFILE = pyz80-$(VERSION).tgz
 
 FILES = $(OUTDIR) \
-		$(OUTDIR)/pyz80 \
-		$(OUTDIR)/COPYING
+	$(OUTDIR)/pyz80 \
+	$(OUTDIR)/COPYING
 
 
 release: requireversion $(FILES)

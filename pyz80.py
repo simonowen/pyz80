@@ -41,6 +41,7 @@ def printlicense():
 # changes since last release
 #
 # - IXh, IXl, IYh and IYl can be used in operands where this forms a valid (undocumented) instruction
+# - support for "compound" instructions such as RLC r,(IX+c)
 # - option to not gzip the disk image
 # - option to treat labels as case sensitive (as COMET itself does)
 # - better package with documentation and test sources
@@ -48,6 +49,10 @@ def printlicense():
 #   Any references to them will go to the nearest in the same file (or use @+ and @- for always the next or previous respectively)
 # - IF, ELSE (IF), ENDIF pseudo-opcodes
 # - defined(symbol) tests whether a symbol exists
+# - multi-line FOR constructs for repeating sequences of instructions
+#   use symbol: EQU FOR limit . . . .NEXT symbol
+# - curly braces text-substitute the value of one symbol into the name of another, 
+#   e.g. FOR 4, DW ROUTINE{FOR}ADDR is equivalent to DW ROUTINE0ADDR, ROUTINE1ADDR, ROUTINE2ADDR, ROUTINE3ADDR
 # - option to predefine symbols from the pyz80 command line
 
 # version 0.6 10-Feb-2006
@@ -101,8 +106,6 @@ def printlicense():
 # PLANNED CHANGES BEFORE VERSION 1.0
 # 
 # - option to include other files on the resulting disk image
-# - support for "compound" instructions such as RLC r,(IX+c)
-
 
 
 import getopt
@@ -292,17 +295,41 @@ def fatal(message):
     print global_currentfile,'"'+global_currentline.strip()+'"'
     sys.exit(1)
 
-def set_symbol(sym, value):
-    if sym[0]=='@':
-        sym = sym + '@' + global_currentfile
+def expand_symbol(sym):
+    while 1:
+        match = re.search('\{([^\{]*)\}', sym)
+        if match:            
+            value = parse_expression(match.group(1))
+            sym = sym.replace(match.group(0),str(value))
+        else:
+            break
+    return sym
 
+def file_and_stack(explicit_currentfile=None):
+    
+    if explicit_currentfile==None:
+        explicit_currentfile = global_currentfile
+    
+    f,l = explicit_currentfile.split(':')
+    s=''
+    for i in forstack:
+        s=s+"^"+str(i[2])
+    return f+s+':'+l
+
+def set_symbol(sym, value, explicit_currentfile=None):
+    sym = expand_symbol(sym)
+
+    if sym[0]=='@':
+        sym = sym + '@' + file_and_stack(explicit_currentfile=explicit_currentfile)
     symboltable[sym] = value 
 
 
 def get_symbol(sym):
+    sym = expand_symbol(sym)
+ 
     if sym[0]=='@':
-        if symboltable.has_key(sym + '@' + global_currentfile):
-            return symboltable[sym + '@' + global_currentfile]
+        if symboltable.has_key(sym + '@' + file_and_stack()):
+            return symboltable[sym + '@' + file_and_stack()]
         else:
             if len(sym) > 1 and (sym[1]=='-' or sym[1]=='+'):
                 directive = sym[1]
@@ -310,13 +337,14 @@ def get_symbol(sym):
             else:
                 directive=''
             
-            reqfile,reqline = global_currentfile.split(':')
+            reqfile,reqline = file_and_stack().split(':')
             reqline = int(reqline)
  
             closestKey = None
-            
             for key in symboltable:
-                if key.startswith(sym+'@'+reqfile+":"):
+                if (sym+'@'+reqfile+":").startswith(key.split(":",1)[0]+":") or (sym+'@'+reqfile+":").startswith(key.split(":",1)[0]+"^"):
+                    # key is allowed fewer layers of FOR stack, but any layers it has must match
+                    # ensure a whole number (ie 1 doesn't match 11) by forceing a colon or hat
                     symfile,symline = key.split(':')
                     symline=int(symline)
                     
@@ -374,9 +402,16 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     
     testsymbol=''
     argcopy = ''
+    
+    incurly = 0
+    
     for c in arg+' ':
-        if c.isalnum() or c=="_" or c=="." or (c=="@" and testsymbol=='') or (c=="+" and testsymbol=='@') or (c=="-" and testsymbol=='@'):
+        if c.isalnum() or c in "_.@{}" or (c=="+" and testsymbol=='@') or (c=="-" and testsymbol=='@') or incurly:
             testsymbol += c
+            if c=='{':
+                incurly += 1
+            elif c=='}':
+                incurly -= 1
         else:
             if (testsymbol != ''):
                 if not testsymbol[0].isdigit():
@@ -405,7 +440,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
                         if not understood:
                             if silenterror:
                                 return ''
-                            fatal("Error in expression "+arg+": Undefined symbol "+testsymbol)
+                            fatal("Error in expression "+arg+": Undefined symbol "+expand_symbol(testsymbol))
                         
                         testsymbol = parsestr
                 elif testsymbol[0]=='0' and len(testsymbol)>2 and testsymbol[1]=='b':
@@ -578,25 +613,6 @@ def check_args(args,expected):
     if expected!=received:
         fatal("Opcode wrong number of arguments, expected "+str(expected)+" received "+str(args))
 
-def op_EQU(p,opargs):
-    global symboltable
-    check_args(opargs,1)
-    if (symbol):
-        if p==1:
-            set_symbol(symbol, parse_expression(opargs, signed=1, silenterror=1))
-        else:
-            expr_result = parse_expression(opargs, signed=1)
-            
-            existing = get_symbol(symbol)
-            
-            if existing == '':
-                set_symbol(symbol, expr_result)
-            elif existing != parse_expression(opargs, signed=1):
-                fatal("Symbol "+symbol+": expected "+str(existing)+" but calculated "+str(parse_expression(opargs, signed=1))+", has this symbol been used twice?")
-    else:
-        warning("EQU without symbol name")
-    return 0
-
 def op_ORG(p,opargs):
     global origin
     check_args(opargs,1)
@@ -632,6 +648,50 @@ def op_AUTOEXEC(p,opargs):
         autoexecpage = dumppage + 1; # basic type page numbering
         autoexecorigin = dumporigin;
 
+    
+    return 0
+
+def op_EQU(p,opargs):
+    global symboltable
+    check_args(opargs,1)
+    if (symbol):
+        if opargs.upper().startswith("FOR") and (opargs[3].isspace() or opargs[3]=='('):
+            set_symbol(symbol, 0)
+            
+            limit = parse_expression(opargs[4:].strip())
+            forstack.append( [symbol,global_currentfile,0,limit] )
+
+        else:
+            if p==1:
+                set_symbol(symbol, parse_expression(opargs, signed=1, silenterror=1))
+            else:
+                expr_result = parse_expression(opargs, signed=1)
+
+                existing = get_symbol(symbol)
+
+                if existing == '':
+                    set_symbol(symbol, expr_result)
+                elif existing != parse_expression(opargs, signed=1):
+                    fatal("Symbol "+expand_symbol(symbol)+": expected "+str(existing)+" but calculated "+str(parse_expression(opargs, signed=1))+", has this symbol been used twice?")
+    else:
+        warning("EQU without symbol name")
+    return 0
+
+def op_NEXT(p,opargs):
+    global global_currentfile
+
+    
+    check_args(opargs,1)
+    foritem = forstack.pop()
+    if opargs != foritem[0]:
+        fatal("NEXT symbol "+opargs+" doesn't match FOR: expected "+foritem[0])
+    foritem[2] += 1
+
+    set_symbol(foritem[0], foritem[2], explicit_currentfile=foritem[1])
+
+    if foritem[2] < foritem[3]:
+        global_currentfile = foritem[1]
+        forstack.append(foritem)
     
     return 0
 
@@ -1330,6 +1390,8 @@ def op_ELSE(p,opargs):
                 ifstate = 1
             else:
                 ifstate = 2
+        else:
+            ifstate = 1
     else:
         fatal("Mismatched ELSE")
 
@@ -1383,26 +1445,24 @@ def assembler_pass(p, inputfile):
     # (by op_INCLUDE for example) and fileinput does not support two files simultaneously
     
     this_currentfilename = global_path + inputfile
-    
-    currentfile = fileinput.input([this_currentfilename])
     if "/" in this_currentfilename:
         global_path = this_currentfilename[:this_currentfilename.rfind('/')+1]
     
-    wholefile=[]
     try:
-        for currentline in currentfile:
-            wholefile.append(currentline)
+        currentfile = open(this_currentfilename,'r')
+        wholefile=currentfile.readlines()
+        currentfile.close()
     except:
         fatal("Couldn't open file "+this_currentfilename+" for reading")
     
-    currentfile.close()
     
     consider_linenumber=0
-    
-    for currentline in wholefile:
-        consider_linenumber+=1
+    while consider_linenumber < len(wholefile):
+
+        currentline = wholefile[consider_linenumber]
+
         global_currentline = currentline
-        global_currentfile = this_currentfilename+":"+repr(consider_linenumber)
+        global_currentfile = this_currentfilename+":"+str(consider_linenumber)
             # write these every instruction because an INCLUDE may have overwritten them
         
         symbol = ''
@@ -1447,8 +1507,10 @@ def assembler_pass(p, inputfile):
             bytes = assemble_instruction(p,opcode)
             origin = (origin + bytes) % 65536
 
+        if global_currentfile.startswith(this_currentfilename+":") and int(global_currentfile.split(':',1)[1]) != consider_linenumber:
+            consider_linenumber = int(global_currentfile.split(':')[1])
 
-
+        consider_linenumber += 1
 
 ###########################################################################
 
@@ -1521,6 +1583,7 @@ if inputfile == outputfile:
 
 symboltable = {}
 memory = []
+forstack=[]
 ifstack = []
 ifstate = 0
 

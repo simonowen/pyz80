@@ -18,6 +18,21 @@ withoutspace:
     rlc c,(iy-17)
     rrc d,(ix+65)
 
+n:  equ FOR 5
+m:  equ FOR 6
+    inc a
+    NEXT m
+    inc b
+    xor a
+    next n
+
+i:  equ for 32
+ldi{i+1}: for i+1,ldi
+    ret
+    next i
+
+    for 32, dw ldi{for+1}
+
 
     db -1
     db 0
