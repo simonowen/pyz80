@@ -4,7 +4,7 @@ def printusage():
     print "pyz80 by Andrew Collier, version 0.6+ Mar-2007"
     print "http://www.intensity.org.uk/samcoupe/pyz80.html"
     print "Usage:"
-    print "     pyz80 (options) inputfile"
+    print "     pyz80 (options) inputfile(s)"
     print "Options:" 
     print "-o outputfile"
     print "   save the resulting disk image at the given path"
@@ -20,6 +20,10 @@ def printusage():
     print "-D symbol=value"
     print "   Define a symbol before parseing the source"
     print "   (value is integer; if omitted, assume 1)"
+    print "-I filepath"
+    print "   Add this file to the disk image before assembling"
+    print "   May be used multiple times to add multiple files"
+    
 
 def printlicense():
     print "This program is free software; you can redistribute it and/or modify"
@@ -40,6 +44,7 @@ def printlicense():
 
 # changes since last release
 #
+# - option to include other files on the resulting disk image, or multiple object files
 # - IXh, IXl, IYh and IYl can be used in operands where this forms a valid (undocumented) instruction
 # - support for "compound" instructions such as RLC r,(IX+c)
 # - option to not gzip the disk image
@@ -105,11 +110,10 @@ def printlicense():
 
 # PLANNED CHANGES BEFORE VERSION 1.0
 # 
-# - option to include other files on the resulting disk image
 
 
 import getopt
-import sys
+import sys, os
 import array
 import fileinput
 import re
@@ -117,8 +121,7 @@ import gzip
 import math # for use by expressions in source files
 import random
 
-def make_disk_image(memory, outputfile):
-    global firstpageoffset
+def new_disk_image():
     
     image = array.array('B')
     image.append(0)
@@ -129,6 +132,176 @@ def make_disk_image(memory, outputfile):
         image.extend(image)
     while len(image) > targetsize:
         image.pop()
+
+    return image
+
+def dsk_at(track,side,sector):
+    return (track*20+side*10+(sector-1))*512
+    # uses numbering 1-10 for sectors, because SAMDOS internal format also does
+
+
+def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, execpage=0, execoffset=0, filelength=None, fromfile=None ):
+    global firstpageoffset
+
+    if fromfile != None:
+        fromfilefile = open(fromfile,'rb')
+        fromfilefile.seek(0,2)
+        filelength = fromfilefile.tell()
+        
+        fromfilefile.seek(0)
+        fromfile = array.array('B')
+        fromfile.fromfile(fromfilefile, filelength)
+
+    sectors_already_used = 0
+    # we're writing the whole image, so we can take a bit of a shortcut
+    # instead of reading the entire sector map to find unused space, we can assume all files are contiguous
+    # and place new files just at the end of the used space
+
+    #find an unused directory entry
+    for direntry in range(80):
+        dirpos = dsk_at(direntry/20,0,1+(direntry%20)/2) + 256*(direntry%2)
+        if image[dirpos] == 0:
+            break;
+        else:
+            sectors_already_used += image[dirpos+11]*256 +image[dirpos+12]
+            
+    else:
+        fatal ("Too many files for dsk format")
+
+    image[dirpos] = 19 # code file
+
+    for i in range(10):
+        image[dirpos+1+i]  = ord((filename+"          ")[i])
+
+    nsectors = 1 + (filelength+9)/510
+    image[dirpos+11] = nsectors / 256 # MSB number of sectors used
+    image[dirpos+12] = nsectors % 256 # LSB number of sectors used
+    
+    starting_side =  (4 + sectors_already_used/10)/80
+    starting_track = (4 + sectors_already_used/10)%80
+    starting_sector = sectors_already_used%10 + 1
+    
+    image[dirpos+13] = starting_track + 128*starting_side # starting track
+    image[dirpos+14] = starting_sector # starting sector
+
+    # 15 - 209 sector address map
+    
+    # write table of used sectors (can precalculate from number of used bits)
+    i=15+sectors_already_used
+    while nsectors > 0:
+        if nsectors>7:
+            image[dirpos+i]=0xff
+            nsectors -= 8
+        else:
+            image[dirpos+i] = (1 << nsectors) -1
+            nsectors=0
+        i += 1
+
+    # 210-219 MGT future and past (reserved)
+        
+    image[dirpos+220] = 0 # flags (reserved)
+
+    # 221-231 File type information (n/a for code files)
+    # 232-235 reserved
+    
+    image[dirpos+236] = codestartpage # start page number
+    image[dirpos+237] = (codestartoffset%256) # page offset (in section C, 0x8000 - 0xbfff)
+    image[dirpos+238] = 128 + (codestartoffset / 256)
+    
+    image[dirpos+239] = filelength/16384 # pages in length
+    image[dirpos+240] = filelength%256 # file length % 16384
+    image[dirpos+241] = (filelength%16384)/256
+    
+    if (execpage>0) :
+        image[dirpos+242] = execpage # execution address or 255 255 255 (basicpage, L, H - offset in page C)
+        image[dirpos+243] = execoffset % 256;
+        image[dirpos+244] = (execoffset%16384)/256 + 128
+    else:
+        image[dirpos+242] = 255 # execution address or 255 255 255 (basicpage, L, H - offset in page C)
+        image[dirpos+243] = 255
+        image[dirpos+244] = 255
+
+
+    side = starting_side
+    track = starting_track
+    sector = starting_sector
+    fpos = 0
+
+# write file's 9 byte header and file
+    imagepos = dsk_at(track,side,sector)
+    
+# 0       File type               19 for a code file
+    image[imagepos + 0] = 19
+# 1-2     Modulo length           Length of file % 16384
+    image[imagepos + 1] = filelength%256
+    image[imagepos + 2] = (filelength%16384)/256
+# 3-4     Offset start            Start address
+    image[imagepos + 3] = (codestartoffset%256)
+    image[imagepos + 4] = 128 + (codestartoffset / 256)
+# 5-6     Unused
+# 7       Number of pages
+    image[imagepos + 7] = filelength/16384
+# 8       Starting page number
+    image[imagepos + 8] = codestartpage
+
+    start_of_file = True
+    while fpos < filelength:
+        imagepos = dsk_at(track,side,sector)
+        unadjustedimagepos = imagepos
+        if start_of_file:
+            copylen = 501
+            imagepos += 9
+            start_of_file = False
+        else:
+            if (filelength-fpos) > 509:
+                copylen = 510
+            else:
+                copylen = (filelength-fpos)
+        
+        if fromfile != None:
+            image[imagepos:imagepos+copylen] = fromfile[fpos:fpos+copylen]
+        else:
+            if ((fpos+firstpageoffset)/16384) == (((fpos+codestartoffset)+copylen-1)/16384):
+                if memory[codestartpage+(fpos+codestartoffset)/16384] != '':
+                    image[imagepos:imagepos+copylen] = memory[codestartpage+(fpos+firstpageoffset)/16384][(fpos+codestartoffset)%16384 : (fpos+codestartoffset)%16384+copylen]
+            else:
+                copylen1 = 16384 - ((fpos+codestartoffset)%16384)
+                page1 = (codestartpage+(fpos+codestartoffset)/16384)
+                if memory[page1] != '':
+                    image[imagepos:imagepos+copylen1] = memory[page1][(fpos+codestartoffset)%16384 : ((fpos+codestartoffset)%16384)+copylen1]
+                if (page1 < 31) and memory[page1+1] != '':
+                    image[imagepos+copylen1:imagepos+copylen] = memory[page1+1][0 : ((fpos+codestartoffset)+copylen)%16384]
+        
+        fpos += copylen
+        
+        sector += 1
+        if sector == 11:
+            sector = 1
+            track += 1
+            if track == 80:
+                track = 0
+                side += 1
+                if side==2:
+                    fatal("Disk full writing "+filename)
+        
+        # pointers to next sector and track
+        if (fpos < filelength):
+            image[unadjustedimagepos+510] = track + 128*side
+            image[unadjustedimagepos+511] = sector
+
+
+def save_disk_image(image, pathname):
+    imagestr = image.tostring()
+    if ZIP:
+        dskfile = gzip.open(pathname, 'wb')
+    else:
+        dskfile = open(pathname, 'wb')
+    dskfile.write(imagestr)
+    dskfile.close()
+    
+
+def save_memory_to_image(image, memory):
+    global firstpageoffset
     
     firstusedpage = ''
     lastusedpage = ''
@@ -147,144 +320,28 @@ def make_disk_image(memory, outputfile):
         else:
             firstpageoffset = 0
         
-        image[0] = 19 # code file
-        
         if (autoexecpage>0) :
-            
-            image[1] = ord('A')
-            image[2] = ord('U')
-            image[3] = ord('T')
-            image[4] = ord('O')
-            
-            for i in range(4):
-                if i < len(outputfile):
-                    image[5+i] = ord(outputfile[i])
-                else:
-                    image[5+i] = ord(' ')
-        
+            savefilename = ("AUTO" + outputfile + "    ")[:8]+".O"
         else:
+            savefilename = (outputfile + "    ")[:8]+".O"
             
-            for i in range(8):
-                if i < len(outputfile):
-                    image[1+i] = ord(outputfile[i])
-                else:
-                    image[1+i] = ord(' ')
+        add_file_to_disk_image(image,savefilename,firstusedpage, firstpageoffset, autoexecpage, autoexecorigin, filelength)
         
-        image[9]  = ord('.')
-        image[10] = ord('O') # filename
-        
-        nsectors = (filelength+9)/510
-        image[11] = nsectors / 256 # MSB number of sectors used
-        image[12] = nsectors % 256 # LSB number of sectors used
-        
-        image[13] = 4 # starting track
-        image[14] = 1 # starting sector
+
+
+def save_file_to_image(image, pathname):
+    sam_filename = os.path.basename(pathname)
     
-    # 15 - 209 sector address map
-    # 210-219 MGT future and past (reserved)
-        
-        image[220] = 0 # flags (reserved)
-    
-    # 221-231 File type information (n/a for code files)
-    # 232-235 reserved
-        
-        image[236] = firstusedpage # start page number
-        image[237] = (firstpageoffset%256) # page offset (in section C, 0x8000 - 0xbfff)
-        image[238] = 128 + (firstpageoffset / 256)
-        
-        image[239] = filelength/16384 # pages in length
-        image[240] = filelength%256 # file length % 16384
-        image[241] = (filelength%16384)/256
-        
-        if (autoexecpage>0) :
-            image[242] = autoexecpage # execution address or 255 255 255 (basicpage, L, H - offset in page C)
-            image[243] = autoexecorigin % 256;
-            image[244] = (autoexecorigin%16384)/256 + 128
+    if len(sam_filename)>10:
+        if sam_filename.count("."):
+            extpos = sam_filename.rindex(".")
+            extlen = len(sam_filename)-extpos
+            sam_filename = sam_filename[:10-extlen] + sam_filename[extpos:]
         else:
-            image[242] = 255 # execution address or 255 255 255 (basicpage, L, H - offset in page C)
-            image[243] = 255
-            image[244] = 255
+            sam_filename = sam_filename[:10]
     
-    # write table of used sectors (can precalculate from number of used bits)
-        i=15
-        while nsectors > 0:
-            if nsectors>7:
-                image[i]=0xff
-                nsectors -= 8
-            else:
-                image[i] = (1 << nsectors) -1
-                nsectors=0
-            i += 1
-        
-        side = 0
-        track = 4
-        sector = 1
-        fpos = 0
-    
-    # write file's 9 byte header and file
-        imagepos = (track*20+side*10+(sector-1))*512
-    # 0       File type               19 for a code file
-        image[imagepos + 0] = 19
-    # 1-2     Modulo length           Length of file % 16384
-        image[imagepos + 1] = filelength%256
-        image[imagepos + 2] = (filelength%16384)/256
-    # 3-4     Offset start            Start address
-        image[imagepos + 3] = (firstpageoffset%256)
-        image[imagepos + 4] = 128 + (firstpageoffset / 256)
-    # 5-6     Unused
-    # 7       Number of pages
-        image[imagepos + 7] = filelength/16384
-    # 8       Starting page number
-        image[imagepos + 8] = firstusedpage
-        
-        while fpos < filelength:
-            imagepos = (track*20+side*10+(sector-1))*512
-            unadjustedimagepos = imagepos
-            if side==0 and track==4 and sector==1:
-                copylen = 501
-                imagepos += 9
-            else:
-                if (filelength-fpos) > 509:
-                    copylen = 510
-                else:
-                    copylen = (filelength-fpos)
-            
-            if ((fpos+firstpageoffset)/16384) == (((fpos+firstpageoffset)+copylen-1)/16384):
-                if memory[firstusedpage+(fpos+firstpageoffset)/16384] != '':
-                    image[imagepos:imagepos+copylen] = memory[firstusedpage+(fpos+firstpageoffset)/16384][(fpos+firstpageoffset)%16384 : (fpos+firstpageoffset)%16384+copylen]
-            else:
-                copylen1 = 16384 - ((fpos+firstpageoffset)%16384)
-                page1 = (firstusedpage+(fpos+firstpageoffset)/16384)
-                if memory[page1] != '':
-                    image[imagepos:imagepos+copylen1] = memory[page1][(fpos+firstpageoffset)%16384 : ((fpos+firstpageoffset)%16384)+copylen1]
-                if (page1 < 31) and memory[page1+1] != '':
-                    image[imagepos+copylen1:imagepos+copylen] = memory[page1+1][0 : ((fpos+firstpageoffset)+copylen)%16384]
-            
-            fpos += copylen
-            
-            sector += 1
-            if sector == 11:
-                sector = 1
-                track += 1
-                if track == 80:
-                    track = 0
-                    side += 1
-            
-            # pointers to next sector and track
-            if (fpos < filelength):
-                image[unadjustedimagepos+510] = track + 128*side
-                image[unadjustedimagepos+511] = sector
-    
-    imagestr = image.tostring()
-    if ZIP:
-        dskfile = gzip.open(outputfile, 'wb')
-    else:
-        dskfile = open(outputfile, 'wb')
-    dskfile.write(imagestr)
-    dskfile.close()
-    
-    
-    
+    add_file_to_disk_image(image,sam_filename, 2, 0, fromfile=pathname)
+
 
 def warning(message):
     print 'Warning:', message
@@ -1515,7 +1572,7 @@ def assembler_pass(p, inputfile):
 ###########################################################################
 
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:', ['version','help','nozip','case'])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','case'])
 except getopt.GetoptError:
     printusage()
     sys.exit(2)
@@ -1529,6 +1586,7 @@ CASE = False
 
 listsymbols=[]
 predefsymbols=[]
+includefiles=[]
 
 for option,value in option_args:
     if option in ('--version'):
@@ -1558,89 +1616,98 @@ for option,value in option_args:
     if option in ('-D'):
         predefsymbols.append(value)
 
+    if option in ('-I'):
+        includefiles.append(value)
+
 if len(file_args) == 0:
     print "No input file specified"
     printusage()
     sys.exit(2)
 
-if len(file_args) > 1:
-    print "Multiple input files specified"
-    printusage()
-    sys.exit(2)
-
-inputfile = file_args[0]
 
 if (outputfile == ''):
-    outputfile = inputfile.split('/')[-1].split('.')[0] + ".dsk";
+    outputfile = file_args[0].split('/')[-1].split('.')[0] + ".dsk";
 
+image = new_disk_image()
 
+for pathname in includefiles:
+    save_file_to_image(image,pathname)
+    
+for inputfile in file_args:
 
+    if inputfile == outputfile:
+        print "Output file and input file are the same!"
+        printusage()
+        sys.exit(2)
 
-if inputfile == outputfile:
-    print "Output file and input file are the same!"
-    printusage()
-    sys.exit(2)
+    symboltable = {}
+    memory = []
+    forstack=[]
+    ifstack = []
+    ifstate = 0
 
-symboltable = {}
-memory = []
-forstack=[]
-ifstack = []
-ifstate = 0
-
-for value in predefsymbols:
-    sym=value.split('=',1)
-    if len(sym)==1:
-        sym.append("1")
-    if not CASE:
-        sym[0]=sym[0].upper()
-    if PYTHONERRORS:
-        val = int(sym[1])
-    else:
-        try:
+    for value in predefsymbols:
+        sym=value.split('=',1)
+        if len(sym)==1:
+            sym.append("1")
+        if not CASE:
+            sym[0]=sym[0].upper()
+        if PYTHONERRORS:
             val = int(sym[1])
-        except:
-            print("Error: Invalid value for symbol predefined on command line, "+value)
-            sys.exit(1)
+        else:
+            try:
+                val = int(sym[1])
+            except:
+                print("Error: Invalid value for symbol predefined on command line, "+value)
+                sys.exit(1)
     
-    symboltable[sym[0]]=int(sym[1])
+        symboltable[sym[0]]=int(sym[1])
 
 
-firstpage=32
-firstpageoffset=16384
+    firstpage=32
+    firstpageoffset=16384
 
-# always 32 memory pages, each a 16k array allocate-on-write
-for initmemorypage in range(32):
-    memory.append('')
+    # always 32 memory pages, each a 16k array allocate-on-write
+    for initmemorypage in range(32):
+        memory.append('')
 
-for p in 1,2:
-    print "pass ",p,"..."
+    for p in 1,2:
+        print "pass ",p,"..."
     
-    global_path=''
+        global_path=''
     
-    origin = 32768
-    dumppage = 1
-    dumporigin = 0
-    autoexecpage = 0
-    autoexecorigin = 0
+        origin = 32768
+        dumppage = 1
+        dumporigin = 0
+        autoexecpage = 0
+        autoexecorigin = 0
     
-    assembler_pass(p, inputfile)
+        assembler_pass(p, inputfile)
 
-if len(ifstack) > 0:
-    print("Error: Mismatched IF and ENDIF statements, too many IF")
-    for item in ifstack:
-        print item[0]
-    sys.exit(1)
+    if len(ifstack) > 0:
+        print("Error: Mismatched IF and ENDIF statements, too many IF")
+        for item in ifstack:
+            print item[0]
+        sys.exit(1)
+    if len(forstack) > 0:
+        print("Error: Mismatched EQU FOR and NEXT statements, too many EQU FOR")
+        for item in forstackstack:
+            print item[1]
+        sys.exit(1)
 
-printsymbols = {}
-for symreg in listsymbols:
-    # add to printsymbols any pair from symboltable whose key matches symreg
-    for sym in symboltable:
-        if re.search(symreg, sym, re.IGNORECASE):
-            printsymbols[sym] = symboltable[sym]
+    printsymbols = {}
+    for symreg in listsymbols:
+        # add to printsymbols any pair from symboltable whose key matches symreg
+        for sym in symboltable:
+            if re.search(symreg, sym, re.IGNORECASE):
+                printsymbols[sym] = symboltable[sym]
 
-if printsymbols != {}:
-    print printsymbols
+    if printsymbols != {}:
+        print printsymbols
 
-make_disk_image(memory, outputfile)
+
+    save_memory_to_image(image, memory)
+
+save_disk_image(image, outputfile)
 
 print "Finished"
