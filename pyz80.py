@@ -355,10 +355,12 @@ def fatal(message):
 
 def expand_symbol(sym):
     while 1:
-        match = re.search('\{([^\{]*)\}', sym)
+        match = re.search('\{([^\{\}]*)\}', sym)
         if match:            
             value = parse_expression(match.group(1))
             sym = sym.replace(match.group(0),str(value))
+            
+            print value, sym, match.group(0)
         else:
             break
     return sym

@@ -134,3 +134,10 @@ testoffset5:
 
     assert (10+10/10) == 2
     
+    
+nine: equ 9
+forty9: equ 49
+
+symbol{forty{nine}}: equ 1337
+
+assert defined(symbol49)
