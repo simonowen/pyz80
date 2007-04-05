@@ -8,21 +8,24 @@ def printusage():
     print "Options:" 
     print "-o outputfile"
     print "   save the resulting disk image at the given path"
-    print "-s regexp"
-    print "   print the value of any symbols matching the given regular expression"
-    print "   This may be used multiple times to output more than one subset"
     print "--nozip"
     print "   do not compress the resulting disk image"
-    print "-e"
-    print "   use python's own error handling instead of trying to catch parse errors"
-    print "--case"
-    print "   treat source labels as case sensitive (as COMET itself did)"
-    print "-D symbol=value"
-    print "   Define a symbol before parseing the source"
-    print "   (value is integer; if omitted, assume 1)"
     print "-I filepath"
     print "   Add this file to the disk image before assembling"
     print "   May be used multiple times to add multiple files"
+    print "-D symbol"
+    print "-D symbol=value"
+    print "   Define a symbol before parseing the source"
+    print "   (value is integer; if omitted, assume 1)"
+    print "--case"
+    print "   treat source labels as case sensitive (as COMET itself did)"
+    print "--nobodmas"
+    print "   treat arithmetic operators without precedence (as COMET itself did)"
+    print "-s regexp"
+    print "   print the value of any symbols matching the given regular expression"
+    print "   This may be used multiple times to output more than one subset"
+    print "-e"
+    print "   use python's own error handling instead of trying to catch parse errors"
     
 
 def printlicense():
@@ -46,9 +49,11 @@ def printlicense():
 #
 # - option to include other files on the resulting disk image, or multiple object files
 # - IXh, IXl, IYh and IYl can be used in operands where this forms a valid (undocumented) instruction
+# - fixed ex (sp),ix
 # - support for "compound" instructions such as RLC r,(IX+c)
 # - option to not gzip the disk image
 # - option to treat labels as case sensitive (as COMET itself does)
+# - option to use no operator precedence (as COMET itself does)
 # - better package with documentation and test sources
 # - "local" symbols starting with the @ character do not need to be unique; use them for the beginning of loops, for example. 
 #   Any references to them will go to the nearest in the same file (or use @+ and @- for always the next or previous respectively)
@@ -110,6 +115,7 @@ def printlicense():
 
 # PLANNED CHANGES BEFORE VERSION 1.0
 # 
+# --nobodmas option for compatability with original COMET files
 
 
 import getopt
@@ -185,18 +191,13 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
     image[dirpos+14] = starting_sector # starting sector
 
     # 15 - 209 sector address map
-    
+ 
     # write table of used sectors (can precalculate from number of used bits)
-    i=15+sectors_already_used
     while nsectors > 0:
-        if nsectors>7:
-            image[dirpos+i]=0xff
-            nsectors -= 8
-        else:
-            image[dirpos+i] = (1 << nsectors) -1
-            nsectors=0
-        i += 1
-
+        image[dirpos+15 + sectors_already_used/8] |= (1 << (sectors_already_used & 7))
+        sectors_already_used += 1
+        nsectors -= 1
+    
     # 210-219 MGT future and past (reserved)
         
     image[dirpos+220] = 0 # flags (reserved)
@@ -340,7 +341,7 @@ def save_file_to_image(image, pathname):
         else:
             sam_filename = sam_filename[:10]
     
-    add_file_to_disk_image(image,sam_filename, 2, 0, fromfile=pathname)
+    add_file_to_disk_image(image,sam_filename, 1, 0, fromfile=pathname)
 
 
 def warning(message):
@@ -520,6 +521,31 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
                 argcopy += testsymbol
                 testsymbol = ''
             argcopy += c
+    
+    if NOBODMAS:
+        # add bracket pairs at interesting locations to simulate let-to-right evaluation
+        
+        aslist = list(argcopy) # turn it into a list so that we can add characters without affecting indexes
+        bracketstack=[0]
+        symvalid = False
+    
+        for c in range (len(aslist)):
+            if aslist[c] == "(":
+                bracketstack = [c]+bracketstack
+            elif aslist[c] == ")":
+                bracketstack = bracketstack[1:]
+            elif (not aslist[c].isalnum()) and (not aslist[c]=='.') and (not aslist[c].isspace()) and symvalid:
+                aslist[c] = ")"+aslist[c]
+                aslist[bracketstack[0]] = '('+aslist[bracketstack[0]]
+                symvalid = False
+            elif aslist[c].isalnum():
+                symvalid = True
+    
+        argcopy2=""
+        for entry in aslist:
+            argcopy2 += entry
+    #    print argcopy,"->",argcopy2
+        argcopy = argcopy2
     
     farg = eval(argcopy)
     if farg >= -.5:
@@ -757,9 +783,17 @@ def op_DS(p,opargs):
 def op_DEFS(p,opargs):
     global dumppage, dumporigin
     check_args(opargs,1)
-    s = parse_expression(opargs)
+    
+    if opargs.upper().startswith("ALIGN") and (opargs[5].isspace() or opargs[5]=='('):
+        align = parse_expression(opargs[5:].strip())
+        if align<1:
+            fatal("Invalid alignment")
+        s = (align - origin%align)%align
+    else:
+        s = parse_expression(opargs)
+
     if s<0:
-        warning("Allocated space < 0 bytes")
+        fatal("Allocated invalid space < 0 bytes")
     dumporigin += s
     dumppage += dumporigin / 16384
     dumporigin %= 16384
@@ -856,6 +890,15 @@ def op_noargs_type(p,opargs,instr):
     if (p==2):
         dump(instr)
     return len(instr)
+   
+def op_ASSERT(p,opargs):
+    check_args(opargs,1)
+    if (p==2):
+        value = parse_expression(opargs)
+        if value == 0:
+            fatal("Assertion failed ("+opargs+")")
+    return 0
+
 
 def op_NOP(p,opargs):
     return op_noargs_type(p,opargs,[0x00])
@@ -1227,22 +1270,28 @@ def op_EX(p,opargs):
     check_args(opargs,2)
     args = opargs.split(',',1)
     
-    pre1,rr1 = double(args[0],allow_af_instead_of_sp=1, allow_index=0)
-    pre2,rr2 = double(args[1],allow_af_instead_of_sp=1, allow_af_alt=1, allow_index=0)
+    if re.search("\A\s*\(\s*SP\s*\)\s*\Z", args[0], re.IGNORECASE):
+        pre2,rr2 = double(args[1],allow_af_instead_of_sp=1, allow_af_alt=1, allow_index=1)
     
-    if ( rr1==1 and rr2==2 ) or ( rr1==2 and rr2==1):
-        # EX DE,HL
-        # or EX HL,DE (can't bring myself to disallow this alternative syntax)
-        instr = pre1
-        instr.extend(pre2)
-        instr.append(0xeb)
-    elif (rr1==3 and rr2==4):
-        instr=[0x08]
-    elif rr2==2 and re.search("\A\s*\(\s*SP\s*\)\s*\Z", args[0], re.IGNORECASE):
-        instr = pre2
-        instr.append(0xe3)
+        if rr2==2:
+            instr = pre2
+            instr.append(0xe3)
+        else:
+            fatal("Can't exchange "+args[0]+" with "+args[1])
     else:
-        fatal("Can't exchange "+args[0]+" with "+args[1])
+        pre1,rr1 = double(args[0],allow_af_instead_of_sp=1, allow_index=0)
+        pre2,rr2 = double(args[1],allow_af_instead_of_sp=1, allow_af_alt=1, allow_index=0)
+    
+        if ( rr1==1 and rr2==2 ) or ( rr1==2 and rr2==1):
+            # EX DE,HL
+            # or EX HL,DE (can't bring myself to disallow this alternative syntax)
+            instr = pre1
+            instr.extend(pre2)
+            instr.append(0xeb)
+        elif (rr1==3 and rr2==4):
+            instr=[0x08]
+        else:
+            fatal("Can't exchange "+args[0]+" with "+args[1])
     
     if (p==2):
         dump(instr)
@@ -1468,12 +1517,14 @@ def op_ENDIF(p,opargs):
 
 def assemble_instruction(p, line):
     opcodeargs = line.split(None,1)
-# or spilt at first open bracket? Hurrah, let's reimplement a built-in function
+    if '(' in opcodeargs[0]:
+        opcodeargs = [line[:line.index('(')] , line[line.index('('):] ]
+
     if len(opcodeargs)>1:
         args = opcodeargs[1].strip()
     else:
         args=''
-    
+        
     inst = opcodeargs[0].upper()
     if (ifstate < 2) or inst=='IF' or inst=='ELSE' or inst=='ENDIF':
         functioncall = 'op_'+inst+'(p,args)'
@@ -1572,7 +1623,7 @@ def assembler_pass(p, inputfile):
 ###########################################################################
 
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','case'])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','case','nobodmas'])
 except getopt.GetoptError:
     printusage()
     sys.exit(2)
@@ -1583,6 +1634,7 @@ outputfile = ''
 PYTHONERRORS = False
 ZIP = True
 CASE = False
+NOBODMAS = False
 
 listsymbols=[]
 predefsymbols=[]
@@ -1609,6 +1661,9 @@ for option,value in option_args:
     
     if option in ('--nozip'):
 	    ZIP = False # save the disk image without compression
+
+    if option in ('--nobodmas'):
+	    NOBODMAS = True # use no operator precedence
     
     if option in ('--case'):
         CASE = True

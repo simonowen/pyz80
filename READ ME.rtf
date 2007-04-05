@@ -1,0 +1,482 @@
+{\rtf1\mac\ansicpg10000\cocoartf824\cocoasubrtf410
+{\fonttbl\f0\fnil\fcharset77 HelveticaNeue-Bold;\f1\fnil\fcharset77 HelveticaNeue;\f2\fswiss\fcharset77 ArialMS;
+\f3\fnil\fcharset77 Monaco;}
+{\colortbl;\red255\green255\blue255;\red0\green19\blue125;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww14260\viewh15820\viewkind0
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\b\fs36 \cf0 pyz80 - a Z80 cross assembler
+\f1\b0\fs28 \
+\
+Version 1.0, released (date)\
+\
+By Andrew Collier\
+{\field{\*\fldinst{HYPERLINK "http://www.intensity.org.uk/contact.html"}}{\fldrslt http://www.intensity.org.uk/contact.html}}\
+\
+
+\f0\b\fs36 Introduction
+\f1\b0\fs28 \
+\
+pyz80 is an assembler for the assembly language of the Z80 micro-processor.\
+\
+It is designed in particular for producing code to run on the Sam Coup\'8e computer, and outputs disk images  which can be loaded by the SimCoupe emulator, or copied onto floppy disk for use with genuine hardware Sams. Nonetheless, it may be useful for users of other Z80-based platforms as well.\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardeftab720\sa160\ql\qnatural
+
+\f2 \cf0 pyz80 is distributed under the terms of the {\field{\*\fldinst{HYPERLINK "http://www.gnu.org/licenses/gpl.html"}}{\fldrslt \cf2 \ul \ulc2 GNU General Public License}}. You can download and use it at no cost. See the file COPYING for more information.
+\f1 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
+
+\f0\b\fs36 Installation
+\f1\b0\fs28 \
+\
+pyz80 is written in python, and should work on MacOS X, Linux, Windows and other platforms if the appropriate interpreter is installed.\
+\
+If you do not have python already, installers can be downloaded from:\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+{\field{\*\fldinst{HYPERLINK "http://www.python.org/download/"}}{\fldrslt \cf0 http://www.python.org/download/}}\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\b\fs36 \cf0 Usage\
+
+\f1\b0\fs28 \
+pyz80 is a command-line tool. To use it, type pyz80 on your command line followed by the path to your input z80 source file:\
+\
+e.g.	
+\f3\fs24 pyz80 testing/test.z80s
+\f1\fs28 \
+\
+This will assemble the source file, and generate a disk image which contains the object code. You can supply more than one z80 source file, in which case each object file is saved as a separate file in the resulting disk image.\
+\
+You can also add options (before the source files) to change details about the operation of pyz80:\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 -o outputfile\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 This option allows you to specify the name of the generated disk image. If this option is not given, the name is chosen based on the filename of the input source file (or the first input source file, if you have specified more than one).
+\f0\b\fs36 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\b0\fs24 \cf0 \
+--nozip\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 If this option is given, then the generated disk image will not be compressed. Otherwise, it will be compressed using gzip.\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 \
+-I filepath\
+   \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 This option allows you to add an extra file to the disk image. It will be added to the directory before any assembled files, so for example you could add the "SAMDOS" file to the image to make it bootable.\
+\
+You can add multiple files by using the -I option more than once:\
+\
+e.g.	
+\f3\fs24 pyz80 -I SAMDOS -I file.txt textReader.z80s
+\f1\fs28 \
+\
+Only code files can be added in this manner, they start at address 32768 and do not auto-execute. If you wish to change the start or execute address of the file, you will need to create a small Z80 source input file containing an MDAT directive. See the Syntax section for further details.\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 \
+-D symbol\
+-D symbol=value\
+   \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 This option defines a symbol before beginning to assemble the source file. The value of the symbol will be available to all expressions, both within instructions and also in assembler directives.
+\f3\fs24 \
+
+\f1\fs28 \
+Since every symbol must have an integer value, if nothing is specified then 1 will be assumed.
+\f3\fs24 \
+\
+--case\
+   
+\f1\fs28 \
+If this option is given, then all symbols in the input Z80 source file will be treated as case sensitive (this is the behaviour of the original COMET assembler). Otherwise, any combination of lower case or upper case will be considered equivalent.\
+\
+Please note this applies only to symbols. Instruction op-codes are always accepted in any combination of upper and lower case.\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 --nobodmas\
+   
+\f1\fs28 \
+If this option is given, then all expressions will be parsed from left to right instead of using the usual operator ordering rules, although brackets can still be used to specify precedence. For example the result of 
+\f3\fs24 10+10/10
+\f1\fs28  in this mode will be two and not eleven (this is the behaviour of the original COMET assembler).\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 -s regexp\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 This option allows you to print out the final value of one or more symbols at the end of assembling a source file. If you specify the text name of a particular symbol, pyz80 will print out the value of that symbol, and any others whose name completely contains what you have asked for:\
+\
+e.g.	
+\f3\fs24 pyz80 -s LDI3 testing/test.z80s\
+
+\f1\fs28 prints
+\f3\fs24 	\{'LDI31': 33802, 'LDI3': 32850, 'LDI30': 33741, 'LDI32': 33865\}
+\f1\fs28 \
+\
+Another common use is to print the value of every symbol in the whole assembly, by using the wild-card character (full stop):\
+\
+e.g.	
+\f3\fs24 pyz80 -s . testing/test.z80s\
+\
+
+\f1\fs28 Most precisely, 
+\f3\fs24 regexp
+\f1\fs28  is a regular expression in python's format; if any part of a symbol matches the expression, then the symbol will be printed.\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 -e\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 If there are errors in the source code, pyz80 will attempt to diagnose the problem and tell you which line of the input Z80 source file is causing the problem. Occasionally, however, it can be difficult to see what mistake in that line is causing the confusion. If this option was specified on the command line, pyz80 will allow the python interpreter to print out its own messages about the problems it found, which may provide more detailed information.\
+
+\f0\b\fs36 \
+Syntax
+\f1\b0\fs28 \
+\
+The input Z80 source text files have a format similar to that used by COMET, one of the Sam's most popular native assemblers.\
+\
+Each line of the source file may contain one symbol definition, and one Z80 instruction or assembler directive.\
+\
+Comments start with semicolon and continue to the end of the line\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\b \cf0 Instructions
+\f1\b0 \
+\
+Z80 instructions and assembler directives may be formatted in upper or lower case.\
+\
+e.g.		
+\f3\fs24 ld A,(DE)\
+		INC e
+\f1\fs28 \
+\
+pyz80 recognises all valid Z80 instructions, included those traditionally undocumented. In instructions where the low byte or high byte of the index registers can be addressed individually, they are referred to in pyz80 syntax as 
+\f3\fs24 IXh
+\f1\fs28 , 
+\f3\fs24 IXl
+\f1\fs28 , 
+\f3\fs24 IYh
+\f1\fs28  and 
+\f3\fs24 IYl
+\f1\fs28 . \
+\
+The undocumented compound instructions (shift and rotate instructions which operate through the index registers and also copy the resulting value into a main register) have the following form of syntax in pyz80:\
+\
+e.g.	 	
+\f3\fs24 ROT r, (IX+c)\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 Undocumented instruction 
+\f3\fs24 SLL
+\f1\fs28  is also included, but because it doesn't operate as its name implies, pyz80 emits a warning when it is used. To assemble this instruction without a warning, use the opcode 
+\f3\fs24 SL1
+\f1\fs28  instead.\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\b \cf0 Symbols
+\f1\b0 \
+\
+Symbols are defined by the symbol name at the start of a line, followed by colon. They are generally given the address of the following instruction, but can be assigned explicitly using the EQU directive.\
+\
+Symbols can contain any alphanumeric character, underscore, and full stop. Symbols formatted in upper or lower case may be used interchangeably, unless 
+\f3\fs24 --case
+\f1\fs28  was specified on the command line.\
+\
+General symbols have global scope. A symbol defined anywhere in the source is valid at all other points in the source, and must be defined only once.\
+\
+A symbol starting with the @ sign (or consisting of the @ sign alone) is a local symbol. You may define a local symbol with the same name multiple times within the source, and this is not an error. The value of a local symbol is always taken from the a definition in the same file, the nearest definition to the point where the symbol is being used.\
+\
+When using a local symbol, you can add + (or -) immediately following the @ sign, which forces pyz80 to use the next (or previous) definition respectively, always ignoring matches in the opposite direction.\
+\
+e.g.	
+\f3\fs24 @loop:	call work\
+		dec b\
+		jr nz, @-loop	; jump up two lines\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
+		ld b,7\
+	@loop:	call office\
+		dec b\
+		jr nz, @loop\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 \
+\
+Where a pair of braces is used as part of a symbol name, the value of the expression inside will be substituted into the name of the symbol being defined or used.\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 e.g.	
+\f3\fs24 nine:	equ 9\
+	k\{nine\}:	equ $   ; defines a symbol called k9\
+ 		        ; is equivalent to  k9: equ $
+\f1\fs28 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
+Braces may not be nested.\
+\
+The expression 
+\f3\fs24 defined (symbol)
+\f1\fs28  tests whether a symbol is defined anywhere in the source, without causing an error if it is not found. The value of this expression is always either 0, if the symbol does not exist, or 1, if it is defined no matter what its value. It can be particularly useful in conjunction with the command line option -D, which allows you to build variant code files without changing the source.\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 e.g.		
+\f3\fs24 ld a, defined(DEBUG)
+\f1\fs28 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\b \cf0 Assembler directives
+\f1\b0 \
+\
+
+\f3\fs24 ORG address
+\f1\fs28 \
+\
+Specify the origin of the code, i.e. the address from which it is intended to be run. This can be anywhere in the address range of the Z80, that is, 0 to 65535.\
+\
+
+\f3\fs24 DUMP address\
+DUMP page, offset
+\f1\fs28 \
+\
+Specify the destination address of the code output. This directive is available in two forms. The first takes an 
+\f3\fs24 address
+\f1\fs28  from 16384 to 65535, these are addresses in pages 0 to 2 as addressed in BASIC. The second form takes a 
+\f3\fs24 page
+\f1\fs28  number from 0 to 31, and an 
+\f3\fs24 offset
+\f1\fs28  within that page of 0 to 16383.\
+\
+
+\f3\fs24 AUTOEXEC\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 \
+The current 
+\f3\fs24 DUMP
+\f1\fs28  address will be marked as the execute address in the directory entry of the output code. When the code file is loaded from the disk image by SamDOS, it will automatically call the execute address. Note that when a machine code routine is called from BASIC it will usually be paged into section C of the address space.
+\f3\fs24 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 \
+This directive may not be used more than once during assembly.
+\f3\fs24 \
+\
+DEFB  n [,n ...]\
+DB    n [,n ...]\
+\
+
+\f1\fs28 Define bytes at the current address. Either DEFB or DB are allowed and are equivalent in meaning. n can be a literal number or any expression, in the range 0 to 255 (or -128 to +127).
+\f3\fs24 \
+\
+DEFW  n [,n ...]\
+DW    n [,n ...]\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 \
+Define words at the current address. Either DEFW or DW are allowed and are equivalent in meaning. n can be a literal number or any expression, in the range 0 to 65535 (or -32768 to +32767).
+\f3\fs24 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
+DEFM  "string"\
+DM    "string"\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 Define a message at the current address. The string is always delimited by double quotes. To include a double quote in the string itself, place two double quote characters adjacent to each other.
+\f3\fs24 \
+\
+DEFS  n\
+DS    n\
+\
+
+\f1\fs28 Define storage space at the current address. The current address increases by n bytes, thus leaving them available for your program's own use.
+\f3\fs24 \
+\
+\
+MDAT
+\f1\fs28 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 INC
+\f1\fs28 	(note about relative paths)\
+
+\f3\fs24 INCLUDE\
+\
+FOR range, instruction\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 Repeats an instruction (or directive) 
+\f3\fs24 range
+\f1\fs28  times.\
+\
+During assembly of this instruction, a symbol 
+\f3\fs24 FOR
+\f1\fs28  is valid and holds the iteration number from 0 to 
+\f3\fs24 range
+\f1\fs28 -1.
+\f3\fs24 \
+\
+symbol: EQU FOR range\
+NEXT symbol\
+\
+IF expression\
+ELSE IF\
+ELSE\
+ENDIF\
+\
+\
+
+\f1\fs28 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\b \cf0 Expressions and special characters\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\b0 \cf0 \
+Wherever an instruction or directive requires a number, a mathematical expression can be used instead. These are allowed to contain any symbol names defined in the file. If the result of an expression is negative, it will appear in the instruction in two's complement.\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 $	
+\f1\fs28 a symbol representing the address of the current instruction\
+\
+
+\f3\fs24 &	
+\f1\fs28 prefixes a hexadecimal number\
+
+\f3\fs24 0x	
+\f1\fs28 prefixes a hexadecimal number\
+
+\f3\fs24 %	
+\f1\fs28 prefixes a binary number\
+
+\f3\fs24 0b	
+\f1\fs28 prefixes a binary number\
+\
+
+\f3\fs24 "	
+\f1\fs28 a single character enclosed in quotes can be used to represent the ascii value of that character\
+
+\f3\fs24 "	
+\f1\fs28 strings are delimited by the double-quote character. To encode a literal double-quote within a string, use the double-quote character twice.\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 \\	
+\f1\fs28 mod\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 Several mathematical functions are available within expressions. You may use any method of the 
+\f3\fs24 random
+\f1\fs28  or 
+\f3\fs24 math
+\f1\fs28  python modules; a few examples are listed below:\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 random()
+\f1\fs28 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
+Returns a random floating point number between 0 and 1. It should be noted that while intermediate stages of the calculation are allowed to have non-integer values, the final value of an expression is always rounded to the nearest integer. Thus it can be useful to multiply float numbers by a constant to keep them in a useful range:\
+\
+e.g.		
+\f3\fs24 DEFB random()*256
+\f1\fs28 \
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 randrange(start,stop [,step])
+\f1\fs28 \
+\
+Returns a random integer in the range 
+\f3\fs24 start
+\f1\fs28  <= x < 
+\f3\fs24 stop
+\f1\fs28 \
+\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 sin(angle)\
+cos(angle)	
+\f1\fs28  \
+
+\f3\fs24 \
+angle
+\f1\fs28  is specified in radians.
+\f3\fs24 \
+\
+pi	
+\f1\fs28  \
+\
+\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\b\fs36 \cf0 Thanks
+\f1\b0\fs28 \
+\
+Thanks to Simon Owen and other users for their feedback during development.\
+\
+
+\f0\b\fs36 Links
+\f1\b0\fs28 \
+\
+pyz80 web page:\
+	{\field{\*\fldinst{HYPERLINK "http://www.intensity.org.uk/samcoupe/pyz80.html"}}{\fldrslt http://www.intensity.org.uk/samcoupe/pyz80.html}}\
+\
+SimCoupe Homepage:\
+	{\field{\*\fldinst{HYPERLINK "http://www.simcoupe.org/"}}{\fldrslt http://www.simcoupe.org/}}\
+\
+World of Sam archive:\
+	{\field{\*\fldinst{HYPERLINK "http://www.worldofsam.org/"}}{\fldrslt http://www.worldofsam.org/}}\
+\
+Wikipedia entry for the SAM Coupe (and for more links):\
+  {\field{\*\fldinst{HYPERLINK "http://wikipedia.org/wiki/Sam_Coupe"}}{\fldrslt http://wikipedia.org/wiki/Sam_Coupe}}\
+\
+
+\f0\b\fs36 Disclaimer
+\f1\b0\fs28 \
+\
+THIS PROGRAM AND DOCUMENTATION ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, NOT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  BY USING THE PROGRAM, YOU AGREE TO BEAR ALL RISKS AND LIABILITIES ARISING FROM THE USE OF THE PROGRAM AND DOCUMENTATION AND THE INFORMATION PROVIDED BY THE PROGRAM AND THE DOCUMENTATION.\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f0\b\fs36 \cf0 Release History
+\f1\b0\fs28 \
+\
+version 1.0\
+version 0.6 \'d0 10 February 2006\
+version 0.5 \'d0 15 January 2005\
+version 0.1 \'d0 19 November 2004\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
+}

@@ -57,6 +57,9 @@ includelength: equ includeend - includestart
     ld (iy+0),45
     ld (ix+1),2
 
+    ex de,hl
+    ex (sp),hl
+    ex (sp),ix
     
 
     defb 0
@@ -72,7 +75,7 @@ includelength: equ includeend - includestart
 
 testoffset:
 
-    ds -5
+#   ds -5
     
 testoffset2:
 
@@ -82,7 +85,15 @@ testoffset2:
 
 testoffset3:
 
-    ds -$\256
+    ds align 256
+    assert ($\256) == 0
+
+before:
+    ds align 256
+after:
+    assert(before == after)
+
+
 
 testoffset4:
    
@@ -121,5 +132,5 @@ testoffset5:
      
 @d: jr @c
 
-
+    assert (10+10/10) == 2
     
