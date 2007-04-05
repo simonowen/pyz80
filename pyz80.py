@@ -13,6 +13,8 @@ def printusage():
     print "-I filepath"
     print "   Add this file to the disk image before assembling"
     print "   May be used multiple times to add multiple files"
+    print "--obj outputfile"
+    print "   save the output code as a raw binary file at the given path"
     print "-D symbol"
     print "-D symbol=value"
     print "   Define a symbol before parseing the source"
@@ -64,6 +66,8 @@ def printlicense():
 # - curly braces text-substitute the value of one symbol into the name of another, 
 #   e.g. FOR 4, DW ROUTINE{FOR}ADDR is equivalent to DW ROUTINE0ADDR, ROUTINE1ADDR, ROUTINE2ADDR, ROUTINE3ADDR
 # - option to predefine symbols from the pyz80 command line
+# - saved files include only used space, and not the rest of the page
+# - option to save raw binaries and not just into disk images
 
 # version 0.6 10-Feb-2006
 #
@@ -301,34 +305,31 @@ def save_disk_image(image, pathname):
     dskfile.close()
     
 
-def save_memory_to_image(image, memory):
-    global firstpageoffset
+def save_memory(memory, image=None, filename=None):
+    global firstpage,firstpageoffset
     
-    firstusedpage = ''
-    lastusedpage = ''
+    if firstpage==32:
+        # code was assembled without using a DUMP directive
+        firstpage = 1
+        firstpageoffset = 0
     
-    for i in range(32):
-        if memory[i]!='':
-            if firstusedpage == '':
-                firstusedpage = i
-            lastusedpage = i
+    if memory[firstpage] != '':
+        # check that something has been assembled at all
     
-    if firstusedpage!='':
-        filelength = (lastusedpage - firstusedpage + 1) * 16384
+        filelength = (lastpage - firstpage + 1) * 16384
         
-        if firstpage == firstusedpage:
-            filelength -= firstpageoffset
-        else:
-            firstpageoffset = 0
+        filelength -= firstpageoffset
+        filelength -= 16384-lastpageoffset
         
         if (autoexecpage>0) :
             savefilename = ("AUTO" + outputfile + "    ")[:8]+".O"
         else:
             savefilename = (outputfile + "    ")[:8]+".O"
-            
-        add_file_to_disk_image(image,savefilename,firstusedpage, firstpageoffset, autoexecpage, autoexecorigin, filelength)
-        
 
+        if image:
+            add_file_to_disk_image(image,savefilename,firstpage, firstpageoffset, autoexecpage, autoexecorigin, filelength)
+        if filename:
+            save_memory_to_file(filename, firstpage, firstpageoffset, filelength)
 
 def save_file_to_image(image, pathname):
     sam_filename = os.path.basename(pathname)
@@ -343,6 +344,30 @@ def save_file_to_image(image, pathname):
     
     add_file_to_disk_image(image,sam_filename, 1, 0, fromfile=pathname)
 
+def save_memory_to_file(filename, firstusedpage, firstpageoffset, filelength):
+    objfile = open(filename, 'wb')
+    
+    flen = filelength
+    page = firstusedpage
+    offset = firstpageoffset
+    
+    while flen:
+        wlen = min(16384-offset, flen)
+        
+        if memory[page] != "":
+            pagestr = memory[page].tostring()
+            objfile.write(pagestr[offset:offset+wlen])
+            
+            
+        else:
+            # write wlen nothings into the file
+            objfile.seek(wlen,1)
+        
+        flen -= wlen
+        page += 1
+        offset=0
+    
+    objfile.close()
 
 def warning(message):
     print 'Warning:', message
@@ -359,8 +384,6 @@ def expand_symbol(sym):
         if match:            
             value = parse_expression(match.group(1))
             sym = sym.replace(match.group(0),str(value))
-            
-            print value, sym, match.group(0)
         else:
             break
     return sym
@@ -706,6 +729,7 @@ def op_ORG(p,opargs):
 
 def op_DUMP(p,opargs):
     global dumppage, dumporigin, firstpage, firstpageoffset
+    check_lastpage()
     if ',' in opargs:
         page,offset = opargs.split(',',1)
         offset = parse_expression(offset, word=1)
@@ -723,6 +747,14 @@ def op_DUMP(p,opargs):
         firstpageoffset = dumporigin
     
     return 0
+
+def check_lastpage():
+    global lastpage, lastpageoffset
+    if dumppage > lastpage:
+        lastpage = dumppage
+        lastpageoffset = dumporigin
+    elif (dumppage == lastpage) and (dumporigin > lastpageoffset):
+        lastpageoffset = dumporigin
 
 def op_AUTOEXEC(p,opargs):
     global autoexecpage, autoexecorigin
@@ -1625,13 +1657,14 @@ def assembler_pass(p, inputfile):
 ###########################################################################
 
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','case','nobodmas'])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','obj=','case','nobodmas'])
 except getopt.GetoptError:
     printusage()
     sys.exit(2)
 
 inputfile = ''
 outputfile = ''
+objectfile = ''
 
 PYTHONERRORS = False
 ZIP = True
@@ -1654,6 +1687,9 @@ for option,value in option_args:
     
     if option in ('-o'):
         outputfile=value
+
+    if option in ('--obj'):
+        objectfile=value
     
     if option in ('-s'):
         listsymbols.append(value)
@@ -1676,13 +1712,17 @@ for option,value in option_args:
     if option in ('-I'):
         includefiles.append(value)
 
-if len(file_args) == 0:
+if len(file_args) == 0 and len(includefiles) == 0:
     print "No input file specified"
     printusage()
     sys.exit(2)
 
+if (objectfile != '') and (len(file_args) != 1):
+    print "Object file output supports only a single source file"
+    printusage()
+    sys.exit(2)
 
-if (outputfile == ''):
+if (outputfile == '') and (objectfile == ''):
     outputfile = file_args[0].split('/')[-1].split('.')[0] + ".dsk";
 
 image = new_disk_image()
@@ -1692,7 +1732,7 @@ for pathname in includefiles:
     
 for inputfile in file_args:
 
-    if inputfile == outputfile:
+    if (inputfile == outputfile) or (inputfile == objectfile):
         print "Output file and input file are the same!"
         printusage()
         sys.exit(2)
@@ -1723,6 +1763,8 @@ for inputfile in file_args:
 
     firstpage=32
     firstpageoffset=16384
+    lastpage=-1
+    lastpageoffset=0
 
     # always 32 memory pages, each a 16k array allocate-on-write
     for initmemorypage in range(32):
@@ -1740,6 +1782,8 @@ for inputfile in file_args:
         autoexecorigin = 0
     
         assembler_pass(p, inputfile)
+
+    check_lastpage()
 
     if len(ifstack) > 0:
         print("Error: Mismatched IF and ENDIF statements, too many IF")
@@ -1763,8 +1807,12 @@ for inputfile in file_args:
         print printsymbols
 
 
-    save_memory_to_image(image, memory)
+    save_memory(memory, image=image)
+    if objectfile != "":
+        save_memory(memory, filename=objectfile)
 
-save_disk_image(image, outputfile)
+
+if outputfile != '':
+    save_disk_image(image, outputfile)
 
 print "Finished"

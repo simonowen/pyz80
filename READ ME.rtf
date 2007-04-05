@@ -77,7 +77,9 @@ You can also add options (before the source files) to change details about the o
 
 \f1\fs28 \cf0 This option allows you to add an extra file to the disk image. It will be added to the directory before any assembled files, so for example you could add the "SAMDOS" file to the image to make it bootable.\
 \
-You can add multiple files by using the -I option more than once:\
+You can add multiple files by using the 
+\f3\fs24 -I
+\f1\fs28  option more than once:\
 \
 e.g.	
 \f3\fs24 pyz80 -I SAMDOS -I file.txt textReader.z80s
@@ -157,7 +159,7 @@ The input Z80 source text files have a format similar to that used by COMET, one
 \
 Each line of the source file may contain one symbol definition, and one Z80 instruction or assembler directive.\
 \
-Comments start with semicolon and continue to the end of the line\
+Comments start with semicolon and continue to the end of the line.\
 \
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
@@ -315,6 +317,7 @@ DS    n\
 \f1\fs28 Define storage space at the current address. The current address increases by n bytes, thus leaving them available for your program's own use.
 \f3\fs24 \
 \
+DS ALIGN n\
 \
 MDAT
 \f1\fs28 \
@@ -344,11 +347,11 @@ symbol: EQU FOR range\
 NEXT symbol\
 \
 IF expression\
-ELSE IF\
+ELSE IF expression\
 ELSE\
 ENDIF\
 \
-\
+ASSERT condition\
 
 \f1\fs28 \
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
@@ -379,7 +382,7 @@ Wherever an instruction or directive requires a number, a mathematical expressio
 \
 
 \f3\fs24 "	
-\f1\fs28 a single character enclosed in quotes can be used to represent the ascii value of that character\
+\f1\fs28 a single character enclosed in double-quotes can be used to represent the ascii value of that character\
 
 \f3\fs24 "	
 \f1\fs28 strings are delimited by the double-quote character. To encode a literal double-quote within a string, use the double-quote character twice.\

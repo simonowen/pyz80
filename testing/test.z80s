@@ -132,8 +132,9 @@ testoffset5:
      
 @d: jr @c
 
+if defined (nobodmas)
     assert (10+10/10) == 2
-    
+endif    
     
 nine: equ 9
 forty9: equ 49
