@@ -2,13 +2,18 @@
 {\fonttbl\f0\fnil\fcharset77 HelveticaNeue-Bold;\f1\fnil\fcharset77 HelveticaNeue;\f2\fswiss\fcharset77 ArialMS;
 \f3\fnil\fcharset77 Monaco;}
 {\colortbl;\red255\green255\blue255;\red0\green19\blue125;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc2\leveljcn2\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid0\'02\'05.;}{\levelnumbers\'01;}}{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc2\leveljcn2\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid0\'02\'05.;}{\levelnumbers\'01;}}{\listname ;}\listid2}
+{\list\listtemplateid3\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc2\leveljcn2\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid0\'02\'05.;}{\levelnumbers\'01;}}{\listname ;}\listid3}
+{\list\listtemplateid4\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc2\leveljcn2\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid0\'02\'05.;}{\levelnumbers\'01;}}{\listname ;}\listid4}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}{\listoverride\listid4\listoverridecount0\ls4}}
 \paperw11900\paperh16840\margl1440\margr1440\vieww14260\viewh15820\viewkind0
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
 \f0\b\fs36 \cf0 pyz80 - a Z80 cross assembler
 \f1\b0\fs28 \
 \
-Version 1.0, released (date)\
+Version 1.0, released 6 April 2007\
 \
 By Andrew Collier\
 {\field{\*\fldinst{HYPERLINK "http://www.intensity.org.uk/contact.html"}}{\fldrslt http://www.intensity.org.uk/contact.html}}\
@@ -89,12 +94,20 @@ Only code files can be added in this manner, they start at address 32768 and do 
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
 \f3\fs24 \cf0 \
+--obj=outputfile\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 This option allows you to save the generated code as a raw binary file, instead of part of a disk image. If you specify this option, no disk image will be generated (unless you also explicitly specify an output disk image file name).\
+\
+You may only assemble a single input Z80 source file if you use this option.
+\f3\fs24 \
+\
 -D symbol\
 -D symbol=value\
    \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f1\fs28 \cf0 This option defines a symbol before beginning to assemble the source file. The value of the symbol will be available to all expressions, both within instructions and also in assembler directives.
+\f1\fs28 This option defines a symbol before beginning to assemble the source file. The value of the symbol will be available to all expressions, both within instructions and also in assembler directives.
 \f3\fs24 \
 
 \f1\fs28 \
@@ -233,8 +246,10 @@ Where a pair of braces is used as part of a symbol name, the value of the expres
 \cf0 e.g.	
 \f3\fs24 nine:	equ 9\
 	k\{nine\}:	equ $   ; defines a symbol called k9\
- 		        ; is equivalent to  k9: equ $
-\f1\fs28 \
+ 		        ; is equivalent to  k9: equ $\
+\
+
+\f1\fs28 Note that the symbol being substituted must be available in the first pass of the assembler (i.e. it must be defined earlier in the file than it is used).\
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 \cf0 \
 The expression 
@@ -319,20 +334,43 @@ DS    n\
 \
 DS ALIGN n\
 \
-MDAT
-\f1\fs28 \
+
+\f1\fs28 This ensures that the following instruction will be aligned on the boundary specified, by leaving a space if necessary.\
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f3\fs24 \cf0 INC
-\f1\fs28 	(note about relative paths)\
+\f3\fs24 \cf0 \
+MDAT "filename"
+\f1\fs28 \
 
-\f3\fs24 INCLUDE\
+\f3\fs24 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 This directive merges a data file from the host filesystem into the object code at the current address. filename is enclosed in double-quotes and is expressed relatively to the file currently being assembled.\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 \
+INC
+\f1\fs28  
+\f3\fs24 "filename"
+\f1\fs28 \
+
+\f3\fs24 INCLUDE "filename"\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 This directive\
+\
+(Both forms of this directive are equivalent, but 
+\f3\fs24 INCLUDE
+\f1\fs28  is available to avoid confusion with the Z80's 
+\f3\fs24 INC
+\f1\fs28  instruction)
+\f3\fs24 \
 \
 FOR range, instruction\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f1\fs28 \cf0 Repeats an instruction (or directive) 
+\f1\fs28 Repeats a single instruction (or directive) 
 \f3\fs24 range
 \f1\fs28  times.\
 \
@@ -344,16 +382,70 @@ During assembly of this instruction, a symbol
 \f3\fs24 \
 \
 symbol: EQU FOR range\
+	...\
 NEXT symbol\
 \
+
+\f1\fs28 Repeats several lines of assembly, 
+\f3\fs24 range
+\f1\fs28  times. When the lines between 
+\f3\fs24 EQU FOR
+\f1\fs28  and 
+\f3\fs24 NEXT
+\f1\fs28  are being assembled,  the symbol 
+\f3\fs24 symbol
+\f1\fs28  is valid, and holds the iteration number from 0 to 
+\f3\fs24 range-1
+\f1\fs28 .\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 FOR...NEXT 
+\f1\fs28 blocks can be nested, with each layer using a different symbol name.
+\f3\fs24 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 \
+Where a local symbol is defined within a 
+\f3\fs24 FOR...NEXT
+\f1\fs28  block, it can only be used within the same block. All references to it will target the same iteration.
+\f3\fs24 \
+\
 IF expression\
-ELSE IF expression\
-ELSE\
+	...\
+[ELSE IF expression]\
+	...\
+[ELSE]\
+	...\
 ENDIF\
 \
-ASSERT condition\
 
-\f1\fs28 \
+\f1\fs28 An 
+\f3\fs24 IF 
+\f1\fs28 block allows conditional assembly of your source based on some condition. For example, you may want to introduce some features during development of an application but to leave them out of release builds; in this case, IF blocks can be effectively used in conjunction with the 
+\f3\fs24 -D
+\f1\fs28  command line option.\
+\
+e.g.	
+\f3\fs24 IF defined (DEBUG)\
+		XOR A\
+		OUT (CLUT),a\
+	ENDIF\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 Note that any symbols used in the expression must be available in the first pass of the assembler (i.e. they must be defined earlier in the file than they are used).\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 \
+ASSERT condition\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 \
+This directive evaluates whether 
+\f3\fs24 condition
+\f1\fs28  is true, and aborts assembly if not. For example, this can be used to ensure that the size of your code has not overstepped any limits you may be imposing.\
+\
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
 \f0\b \cf0 Expressions and special characters\
@@ -384,7 +476,7 @@ Wherever an instruction or directive requires a number, a mathematical expressio
 \f3\fs24 "	
 \f1\fs28 a single character enclosed in double-quotes can be used to represent the ascii value of that character\
 
-\f3\fs24 "	
+\f3\fs24 ""	
 \f1\fs28 strings are delimited by the double-quote character. To encode a literal double-quote within a string, use the double-quote character twice.\
 \
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
@@ -418,10 +510,9 @@ e.g.
 \
 Returns a random integer in the range 
 \f3\fs24 start
-\f1\fs28  <= x < 
+\f1\fs28  \'b2 x < 
 \f3\fs24 stop
 \f1\fs28 \
-\
 \
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
@@ -437,12 +528,12 @@ angle
 pi	
 \f1\fs28  \
 \
-\
-\
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
 \f0\b\fs36 \cf0 Thanks
 \f1\b0\fs28 \
+\
+Thanks to Edwin Blink for writing the original COMET assembler for the Sam Coup\'8e.\
 \
 Thanks to Simon Owen and other users for their feedback during development.\
 \
@@ -459,8 +550,8 @@ SimCoupe Homepage:\
 World of Sam archive:\
 	{\field{\*\fldinst{HYPERLINK "http://www.worldofsam.org/"}}{\fldrslt http://www.worldofsam.org/}}\
 \
-Wikipedia entry for the SAM Coupe (and for more links):\
-  {\field{\*\fldinst{HYPERLINK "http://wikipedia.org/wiki/Sam_Coupe"}}{\fldrslt http://wikipedia.org/wiki/Sam_Coupe}}\
+Wikipedia entry for the SAM Coup\'8e (and for more links):\
+	{\field{\*\fldinst{HYPERLINK "http://wikipedia.org/wiki/Sam_Coupe"}}{\fldrslt http://wikipedia.org/wiki/Sam_Coupe}}\
 \
 
 \f0\b\fs36 Disclaimer
@@ -473,11 +564,69 @@ THIS PROGRAM AND DOCUMENTATION ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIN
 \f0\b\fs36 \cf0 Release History
 \f1\b0\fs28 \
 \
-version 1.0\
-version 0.6 \'d0 10 February 2006\
-version 0.5 \'d0 15 January 2005\
-version 0.1 \'d0 19 November 2004\
+Version 1.0, 6 April 2007\
 \
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
+\ls1\ilvl0\cf0 {\listtext	\'a5	}option to include other files on the resulting disk image, or multiple object files\
+{\listtext	\'a5	}IXh, IXl, IYh and IYl can be used in operands where this forms a valid (undocumented) instruction\
+{\listtext	\'a5	}fixed ex (sp),ix\
+{\listtext	\'a5	}support for "compound" instructions such as RLC r,(IX+c)\
+{\listtext	\'a5	}option to not gzip the disk image\
+{\listtext	\'a5	}option to treat labels as case sensitive (as COMET itself does)\
+{\listtext	\'a5	}option to work without bodmas operator precedence (as COMET itself does)\
+{\listtext	\'a5	}better package with documentation and test sources\
+{\listtext	\'a5	}"local" symbols starting with the @ character do not need to be unique; use them for the beginning of loops, for example. \
+{\listtext	\'a5	}Any references to them will go to the nearest in the same file (or use @+ and @- for always the next or previous respectively)\
+{\listtext	\'a5	}IF, ELSE (IF), ENDIF pseudo-opcodes\
+{\listtext	\'a5	}defined(symbol) tests whether a symbol exists\
+{\listtext	\'a5	}multi-line FOR constructs for repeating sequences of instructions\
+{\listtext	\'a5	}curly braces text-substitute the value of one symbol into the name of another, \
+{\listtext	\'a5	}option to predefine symbols from the pyz80 command line\
+{\listtext	\'a5	}saved files include only used space, and not the rest of the page\
+{\listtext	\'a5	}option to save raw binaries and not just into disk images\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
+Version 0.6, 10 February 2006\
+\
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
+\ls2\ilvl0\cf0 {\listtext	\'a5	}implemented SLL (with a warning)\
+{\listtext	\'a5	}use directive AUTOEXEC (usually straight after a DUMP) to set automatic execution of code from the current target address\
+{\listtext	\'a5	}simple test to stop output file overwriting source file\
+{\listtext	\'a5	}instructions may now be tab separated, not just space\
+{\listtext	\'a5	}add warning when operands are generated out of range of the instruction\
+{\listtext	\'a5	}better default output file name\
+{\listtext	\'a5	}cope better with errors in z80s source (symbol names used twice)\
+{\listtext	\'a5	}added -e option (lets you see python's error messages directly)\
+{\listtext	\'a5	}allow . in symbol names\
+{\listtext	\'a5	}file doesn't have to start at page boundary (helpful for writing boot sectors and stuff)\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
+Version 0.5, 15 January 2005\
+\
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
+\ls3\ilvl0\cf0 {\listtext	\'a5	}new pseudo-opcode: FOR limit, codeseq\
+{\listtext	\'a5	}allow % as a prefix to binary numbers\
+{\listtext	\'a5	}fix LD (IX+n),n\
+{\listtext	\'a5	}slightly more flexibility if EQU definition depends on a symbol has not been defined until later in the source file (this is not allowed to affect code size)\
+{\listtext	\'a5	}allow leading zeros in decimal literals (passing these directly to the python expression parser as previously would cause them to be treated as octal)\
+{\listtext	\'a5	}allow DB, DW ... as shorthand forms of DEFB, DEFW etc\
+{\listtext	\'a5	}allow character constants expressions (e.g. DB "A")\
+{\listtext	\'a5	}save file correctly if unused part of the last sector falls out of memory\
+{\listtext	\'a5	}more robust expression parser doesn't replace substrings of symbols\
+{\listtext	\'a5	}DEFM can cope with strings containing semicolons, colons\
+{\listtext	\'a5	}import python math and random modules to make some of its functions available to the expression parser\
+{\listtext	\'a5	}removed nesting of functions because the scoping rules don't seem to work the way FOR needs them\
+{\listtext	\'a5	}fixed confusion between INC opcode and INC (include) directive\
+{\listtext	\'a5	}changed file loading slightly because fileinput doesn't cut the recursive mustard.\
+{\listtext	\'a5	}allow underscore character in symbol names, and sanity check for syntax errors\
+{\listtext	\'a5	}print a subset of the symbol table after assembly is complete\
+{\listtext	\'a5	}files included by files included along a relative path will search for their files on that path\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
+Version 0.1, 19 November 2004\
+\
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
+\ls4\ilvl0\cf0 {\listtext	\'a5	}initial release\
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 \cf0 \
 }

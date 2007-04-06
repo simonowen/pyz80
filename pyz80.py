@@ -13,7 +13,7 @@ def printusage():
     print "-I filepath"
     print "   Add this file to the disk image before assembling"
     print "   May be used multiple times to add multiple files"
-    print "--obj outputfile"
+    print "--obj=outputfile"
     print "   save the output code as a raw binary file at the given path"
     print "-D symbol"
     print "-D symbol=value"
@@ -45,81 +45,10 @@ def printlicense():
     print "along with this program; if not, write to the Free Software"
     print "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA"
 
-# CHANGELOG
-
-# changes since last release
-#
-# - option to include other files on the resulting disk image, or multiple object files
-# - IXh, IXl, IYh and IYl can be used in operands where this forms a valid (undocumented) instruction
-# - fixed ex (sp),ix
-# - support for "compound" instructions such as RLC r,(IX+c)
-# - option to not gzip the disk image
-# - option to treat labels as case sensitive (as COMET itself does)
-# - option to use no operator precedence (as COMET itself does)
-# - better package with documentation and test sources
-# - "local" symbols starting with the @ character do not need to be unique; use them for the beginning of loops, for example. 
-#   Any references to them will go to the nearest in the same file (or use @+ and @- for always the next or previous respectively)
-# - IF, ELSE (IF), ENDIF pseudo-opcodes
-# - defined(symbol) tests whether a symbol exists
-# - multi-line FOR constructs for repeating sequences of instructions
-#   use symbol: EQU FOR limit . . . .NEXT symbol
-# - curly braces text-substitute the value of one symbol into the name of another, 
-#   e.g. FOR 4, DW ROUTINE{FOR}ADDR is equivalent to DW ROUTINE0ADDR, ROUTINE1ADDR, ROUTINE2ADDR, ROUTINE3ADDR
-# - option to predefine symbols from the pyz80 command line
-# - saved files include only used space, and not the rest of the page
-# - option to save raw binaries and not just into disk images
-
-# version 0.6 10-Feb-2006
-#
-# - implemented SLL (with a warning)
-# - use directive AUTOEXEC (usually straight after a DUMP) to set automatic execution of code from the current target address
-# - simple test to stop output file overwriting source file
-# - instructions may now be tab separated, not just space
-# - add warning when operands are generated out of range of the instruction
-# - better default output file name
-# - cope better with errors in z80s source (symbol names used twice)
-# - added -e option (lets you see python's error messages directly)
-# - allow . in symbol names
-# - file doesn't have to start at page boundary (helpful for writing boot sectors and stuff)
-
-# version 0.5 15-Jan-2005
-#
-# - new pseudo-opcode: FOR limit, codeseq
-#   repeats an instruction multiple times
-#   symbol FOR takes value of 0 ... limit-1
-#   eg FOR 128, LDI
-#      FOR 256, DEFB -0.5+127.5*sin((FOR/256.0)*pi*2)
-# - allow % as a prefix to binary numbers
-# - fix LD (IX+n),n
-# - slightly more flexibility if EQU definition depends on a symbol has not been defined
-#   until later in the source file (this is not allowed to affect code size)
-# - allow leading zeros in decimal literals (passing these directly to the python
-#   expression parser as previously would cause them to be treated as octal)
-# - allow DB, DW ... as shorthand forms of DEFB, DEFW etc
-# - allow character constants expressions (e.g. DB "A")
-# - save file correctly if unused part of the last sector falls out of memory
-# - more robust expression parser doesn't replace substrings of symbols
-# - DEFM can cope with strings containing semicolons, colons
-# - import python math and random modules to make some of its functions available to the expression parser
-# - removed nesting of functions because the scoping rules don't seem to work the way FOR needs them
-# - fixed confusion between INC opcode and INC (include) directive
-# - changed file loading slightly because fileinput doesn't cut the recursive mustard.
-# - allow underscore character in symbol names, and sanity check for syntax errors
-# - print a subset of the symbol table after assembly is complete
-# - files included by files included along a relative path will search for their files on that path
-
-# version 0.1 19-Nov-2004
-#
-# - initial release
-
 # KNOWN ISSUES
 # -  quoted commas, in lines where other commas are expected
 #    eg. DEFB 43,23,",",17,56
 #    I don't think this occurs very often.
-
-# PLANNED CHANGES BEFORE VERSION 1.0
-# 
-# --nobodmas option for compatability with original COMET files
 
 
 import getopt
@@ -776,6 +705,8 @@ def op_EQU(p,opargs):
             set_symbol(symbol, 0)
             
             limit = parse_expression(opargs[4:].strip())
+            if limit < 1:
+                error("FOR range < 1 not allowed")
             forstack.append( [symbol,global_currentfile,0,limit] )
 
         else:

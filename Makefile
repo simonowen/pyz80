@@ -10,7 +10,8 @@ OUTFILE = pyz80-$(VERSION).tgz
 
 FILES = $(OUTDIR) \
 	$(OUTDIR)/pyz80 \
-	$(OUTDIR)/COPYING
+	$(OUTDIR)/COPYING \
+	$(OUTDIR)/READ\ ME.rtf
 
 
 release: requireversion $(FILES)
@@ -26,16 +27,15 @@ clean:
 $(OUTDIR):
 	mkdir $(OUTDIR)
 
-$(OUTDIR)/pyz80.py: pyz80.py
+$(OUTDIR)/pyz80: pyz80.py
 	cp $< $@
 	chmod +x $@
-
-$(OUTDIR)/pyz80: $(OUTDIR)/pyz80.py
-	ln -s pyz80.py $@
 
 $(OUTDIR)/COPYING: COPYING
 	cp $< $@
 
+$(OUTDIR)/READ\ ME.rtf: READ\ ME.rtf
+	cp "$<" "$@"
 
 
 test: testing/test.z80s testing/include.z80s
