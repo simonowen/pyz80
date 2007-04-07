@@ -13,7 +13,7 @@
 \f0\b\fs36 \cf0 pyz80 - a Z80 cross assembler
 \f1\b0\fs28 \
 \
-Version 1.0, released 6 April 2007\
+Version 1.0, released 10 April 2007\
 \
 By Andrew Collier\
 {\field{\*\fldinst{HYPERLINK "http://www.intensity.org.uk/contact.html"}}{\fldrslt http://www.intensity.org.uk/contact.html}}\
@@ -129,11 +129,9 @@ Please note this applies only to symbols. Instruction op-codes are always accept
 If this option is given, then all expressions will be parsed from left to right instead of using the usual operator ordering rules, although brackets can still be used to specify precedence. For example the result of 
 \f3\fs24 10+10/10
 \f1\fs28  in this mode will be two and not eleven (this is the behaviour of the original COMET assembler).\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\
 
-\f3\fs24 \cf0 -s regexp\
+\f3\fs24 -s regexp\
 \
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
@@ -230,8 +228,7 @@ e.g.
 \f3\fs24 @loop:	call work\
 		dec b\
 		jr nz, @-loop	; jump up two lines\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 \
+\
 		ld b,7\
 	@loop:	call office\
 		dec b\
@@ -242,33 +239,30 @@ e.g.
 \
 Where a pair of braces is used as part of a symbol name, the value of the expression inside will be substituted into the name of the symbol being defined or used.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 e.g.	
+e.g.	
 \f3\fs24 nine:	equ 9\
 	k\{nine\}:	equ $   ; defines a symbol called k9\
  		        ; is equivalent to  k9: equ $\
 \
 
 \f1\fs28 Note that the symbol being substituted must be available in the first pass of the assembler (i.e. it must be defined earlier in the file than it is used).\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 \
+\
 The expression 
 \f3\fs24 defined (symbol)
 \f1\fs28  tests whether a symbol is defined anywhere in the source, without causing an error if it is not found. The value of this expression is always either 0, if the symbol does not exist, or 1, if it is defined no matter what its value. It can be particularly useful in conjunction with the command line option -D, which allows you to build variant code files without changing the source.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 e.g.		
+e.g.		
 \f3\fs24 ld a, defined(DEBUG)
 \f1\fs28 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 \
+\
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
 \f0\b \cf0 Assembler directives
 \f1\b0 \
 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f3\fs24 ORG address
+\f3\fs24 \cf0 ORG address
 \f1\fs28 \
 \
 Specify the origin of the code, i.e. the address from which it is intended to be run. This can be anywhere in the address range of the Z80, that is, 0 to 65535.\
@@ -293,11 +287,10 @@ Specify the destination address of the code output. This directive is available 
 \f1\fs28 \cf0 \
 The current 
 \f3\fs24 DUMP
-\f1\fs28  address will be marked as the execute address in the directory entry of the output code. When the code file is loaded from the disk image by SamDOS, it will automatically call the execute address. Note that when a machine code routine is called from BASIC it will usually be paged into section C of the address space.
+\f1\fs28  address will be marked as the execute address in the directory entry of the output disk image. When the code file is loaded from the disk image by SamDOS, it will automatically call the execute address. Note that when a machine code routine is called from BASIC it will usually be paged into section C of the address space.
 \f3\fs24 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f1\fs28 \cf0 \
+\f1\fs28 \
 This directive may not be used more than once during assembly.
 \f3\fs24 \
 \
@@ -310,19 +303,16 @@ DB    n [,n ...]\
 \
 DEFW  n [,n ...]\
 DW    n [,n ...]\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f1\fs28 \cf0 \
+\f1\fs28 \
 Define words at the current address. Either DEFW or DW are allowed and are equivalent in meaning. n can be a literal number or any expression, in the range 0 to 65535 (or -32768 to +32767).
 \f3\fs24 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 \
+\
 DEFM  "string"\
 DM    "string"\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f1\fs28 \cf0 Define a message at the current address. The string is always delimited by double quotes. To include a double quote in the string itself, place two double quote characters adjacent to each other.
+\f1\fs28 Define a message at the current address. The string is always delimited by double quotes. To include a double quote in the string itself, place two double quote characters adjacent to each other.
 \f3\fs24 \
 \
 DEFS  n\
@@ -432,9 +422,8 @@ e.g.
 		OUT (CLUT),a\
 	ENDIF\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f1\fs28 \cf0 Note that any symbols used in the expression must be available in the first pass of the assembler (i.e. they must be defined earlier in the file than they are used).\
+\f1\fs28 Note that any symbols used in the expression must be available in the first pass of the assembler (i.e. they must be defined earlier in the file than they are used).\
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
 \f3\fs24 \cf0 \
@@ -479,33 +468,28 @@ Wherever an instruction or directive requires a number, a mathematical expressio
 \f3\fs24 ""	
 \f1\fs28 strings are delimited by the double-quote character. To encode a literal double-quote within a string, use the double-quote character twice.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f3\fs24 \cf0 \\	
+\f3\fs24 \\	
 \f1\fs28 mod\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 Several mathematical functions are available within expressions. You may use any method of the 
+Several mathematical functions are available within expressions. You may use any method of the 
 \f3\fs24 random
 \f1\fs28  or 
 \f3\fs24 math
 \f1\fs28  python modules; a few examples are listed below:\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f3\fs24 \cf0 random()
+\f3\fs24 random()
 \f1\fs28 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
-\cf0 \
+\
 Returns a random floating point number between 0 and 1. It should be noted that while intermediate stages of the calculation are allowed to have non-integer values, the final value of an expression is always rounded to the nearest integer. Thus it can be useful to multiply float numbers by a constant to keep them in a useful range:\
 \
 e.g.		
 \f3\fs24 DEFB random()*256
 \f1\fs28 \
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f3\fs24 \cf0 randrange(start,stop [,step])
+\f3\fs24 randrange(start,stop [,step])
 \f1\fs28 \
 \
 Returns a random integer in the range 
@@ -514,9 +498,8 @@ Returns a random integer in the range
 \f3\fs24 stop
 \f1\fs28 \
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f3\fs24 \cf0 sin(angle)\
+\f3\fs24 sin(angle)\
 cos(angle)	
 \f1\fs28  \
 
@@ -559,9 +542,8 @@ Wikipedia entry for the SAM Coup\'8e (and for more links):\
 \
 THIS PROGRAM AND DOCUMENTATION ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, NOT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  BY USING THE PROGRAM, YOU AGREE TO BEAR ALL RISKS AND LIABILITIES ARISING FROM THE USE OF THE PROGRAM AND DOCUMENTATION AND THE INFORMATION PROVIDED BY THE PROGRAM AND THE DOCUMENTATION.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f0\b\fs36 \cf0 Release History
+\f0\b\fs36 Release History
 \f1\b0\fs28 \
 \
 Version 1.0, 6 April 2007\
@@ -570,20 +552,21 @@ Version 1.0, 6 April 2007\
 \ls1\ilvl0\cf0 {\listtext	\'a5	}option to include other files on the resulting disk image, or multiple object files\
 {\listtext	\'a5	}IXh, IXl, IYh and IYl can be used in operands where this forms a valid (undocumented) instruction\
 {\listtext	\'a5	}fixed ex (sp),ix\
+{\listtext	\'a5	}fixed parse bug if a symbol name starts with IX or IY\
 {\listtext	\'a5	}support for "compound" instructions such as RLC r,(IX+c)\
 {\listtext	\'a5	}option to not gzip the disk image\
+{\listtext	\'a5	}option to save raw binaries and not just into disk images\
 {\listtext	\'a5	}option to treat labels as case sensitive (as COMET itself does)\
 {\listtext	\'a5	}option to work without bodmas operator precedence (as COMET itself does)\
 {\listtext	\'a5	}better package with documentation and test sources\
-{\listtext	\'a5	}"local" symbols starting with the @ character do not need to be unique; use them for the beginning of loops, for example. \
-{\listtext	\'a5	}Any references to them will go to the nearest in the same file (or use @+ and @- for always the next or previous respectively)\
+{\listtext	\'a5	}"local" symbols starting with the @ character do not need to be unique; use them for the beginning of loops, for example. Any references to them will go to the nearest in the same file (or use @+ and @- for always the next or previous respectively)\
 {\listtext	\'a5	}IF, ELSE (IF), ENDIF pseudo-opcodes\
 {\listtext	\'a5	}defined(symbol) tests whether a symbol exists\
 {\listtext	\'a5	}multi-line FOR constructs for repeating sequences of instructions\
 {\listtext	\'a5	}curly braces text-substitute the value of one symbol into the name of another, \
 {\listtext	\'a5	}option to predefine symbols from the pyz80 command line\
 {\listtext	\'a5	}saved files include only used space, and not the rest of the page\
-{\listtext	\'a5	}option to save raw binaries and not just into disk images\
+{\listtext	\'a5	}\
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 \cf0 \
 Version 0.6, 10 February 2006\

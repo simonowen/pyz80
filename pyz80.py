@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 def printusage():
-    print "pyz80 by Andrew Collier, version 0.6+ Mar-2007"
+    print "pyz80 by Andrew Collier, version 1.0 10-Apr-2007"
     print "http://www.intensity.org.uk/samcoupe/pyz80.html"
     print "Usage:"
     print "     pyz80 (options) inputfile(s)"
@@ -581,30 +581,38 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=
         m = 6
     
     if m=='' and allow_index:
-        match = re.search("\A\s*\(\s*IX\s*(.*)\s*\)\s*\Z", arg, re.IGNORECASE)
+        match = re.search("\A\s*\(\s*IX\s*\)\s*\Z", arg, re.IGNORECASE)
         if match:
             m = 6
             prefix = [0xdd]
-            offset = match.group(1)
-            if offset == '' or p!=2:
-                postfix = [0]
-            else:
-                if not allow_offset:
-                    fatal ("Index register offset not allowed in this instruction")
-                postfix = [parse_expression(offset, byte=1)]
-    
+            postfix = [0]
+            
+        elif allow_offset:
+            match = re.search("\A\s*\(\s*IX\s*([+-].*)\s*\)\s*\Z", arg, re.IGNORECASE)
+            if match:
+                m = 6
+                prefix = [0xdd]
+                if p==2:
+                    postfix = [parse_expression(match.group(1), byte=1)]
+                else:
+                    postfix = [0]
+
     if m=='' and allow_index:
-        match = re.search("\A\s*\(\s*IY\s*(.*)\s*\)\s*\Z", arg, re.IGNORECASE)
+        match = re.search("\A\s*\(\s*IY\s*\)\s*\Z", arg, re.IGNORECASE)
         if match:
             m = 6
             prefix = [0xfd]
-            offset = match.group(1)
-            if offset == '' or p!=2:
-                postfix = [0]
-            else:
-                if not allow_offset:
-                    fatal ("Index register offset not allowed in this instruction")
-                postfix = [parse_expression(offset, byte=1)]
+            postfix = [0]
+
+        elif allow_offset:
+            match = re.search("\A\s*\(\s*IY\s*([+-].*)\s*\)\s*\Z", arg, re.IGNORECASE)
+            if match:
+                m = 6
+                prefix = [0xfd]
+                if p==2:
+                    postfix = [parse_expression(match.group(1), byte=1)]
+                else:
+                    postfix = [0]
     
     return prefix,m,postfix
 
