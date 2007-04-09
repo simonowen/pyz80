@@ -19,6 +19,10 @@ def printusage():
     print "-D symbol=value"
     print "   Define a symbol before parseing the source"
     print "   (value is integer; if omitted, assume 1)"
+    print "--exportfile=filename"
+    print "   Save all symbol information into the given file"
+    print "--importfile=filename"
+    print "   Define symbols before assembly, from a file previously exported"
     print "--case"
     print "   treat source labels as case sensitive (as COMET itself did)"
     print "--nobodmas"
@@ -59,6 +63,7 @@ import re
 import gzip
 import math # for use by expressions in source files
 import random
+import cPickle
 
 def new_disk_image():
     
@@ -1596,7 +1601,7 @@ def assembler_pass(p, inputfile):
 ###########################################################################
 
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','obj=','case','nobodmas'])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','obj=','case','nobodmas','exportfile=','importfile='])
 except getopt.GetoptError:
     printusage()
     sys.exit(2)
@@ -1613,6 +1618,8 @@ NOBODMAS = False
 listsymbols=[]
 predefsymbols=[]
 includefiles=[]
+importfiles=[]
+exportfile = None
 
 for option,value in option_args:
     if option in ('--version'):
@@ -1644,6 +1651,17 @@ for option,value in option_args:
     
     if option in ('--case'):
         CASE = True
+
+    if option in ('--exportfile'):
+        if exportfile == None:
+            exportfile = value
+        else:
+            print "Export file specified twice"
+            printusage()
+            sys.exit(2)
+
+    if option in  ('--importfile'):
+        importfiles.append(value)
 
     if option in ('-D'):
         predefsymbols.append(value)
@@ -1699,6 +1717,16 @@ for inputfile in file_args:
     
         symboltable[sym[0]]=int(sym[1])
 
+    for picklefilename in importfiles:
+        picklefile = open(picklefilename)
+        u = cPickle.Unpickler(picklefile)
+        ImportSymbols = u.load()
+        for sym,val in ImportSymbols.items():
+            if not CASE:
+                symboltable[sym.upper()]=val
+            else:
+                symboltable[sym]=val
+        picklefile.close()
 
     firstpage=32
     firstpageoffset=16384
@@ -1745,6 +1773,10 @@ for inputfile in file_args:
     if printsymbols != {}:
         print printsymbols
 
+    if exportfile:
+        f = open(exportfile,'w')
+        p = cPickle.Pickler(f)
+        p.dump(symboltable)
 
     save_memory(memory, image=image)
     if objectfile != "":

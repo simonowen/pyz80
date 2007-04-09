@@ -7,7 +7,7 @@
 {\list\listtemplateid3\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc2\leveljcn2\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid0\'02\'05.;}{\levelnumbers\'01;}}{\listname ;}\listid3}
 {\list\listtemplateid4\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc2\leveljcn2\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid0\'02\'05.;}{\levelnumbers\'01;}}{\listname ;}\listid4}}
 {\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}{\listoverride\listid4\listoverridecount0\ls4}}
-\paperw11900\paperh16840\margl1440\margr1440\vieww14260\viewh15820\viewkind0
+\paperw11900\paperh16840\margl1440\margr1440\vieww14660\viewh15680\viewkind0
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
 \f0\b\fs36 \cf0 pyz80 - a Z80 cross assembler
@@ -114,16 +114,34 @@ You may only assemble a single input Z80 source file if you use this option.
 Since every symbol must have an integer value, if nothing is specified then 1 will be assumed.
 \f3\fs24 \
 \
---case\
+--exportfile=file\
+\
+
+\f1\fs28 This option allows you to save the whole symbol table to a file, following assembly.\
+\
+Only one file can be exported in this fashion. The file format is likely to be specific to the version of python in use.\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 --importfile=file\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f1\fs28 \cf0 This option allows you to import a symbol table which had previously been saved with the corresponding 
+\f3\fs24 --exportfile
+\f1\fs28  option. All the symbols which had been defined during the first assembly run, will be available to any part of your input Z80 source.\
+\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+
+\f3\fs24 \cf0 --case\
    
 \f1\fs28 \
 If this option is given, then all symbols in the input Z80 source file will be treated as case sensitive (this is the behaviour of the original COMET assembler). Otherwise, any combination of lower case or upper case will be considered equivalent.\
 \
 Please note this applies only to symbols. Instruction op-codes are always accepted in any combination of upper and lower case.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f3\fs24 \cf0 --nobodmas\
+\f3\fs24 --nobodmas\
    
 \f1\fs28 \
 If this option is given, then all expressions will be parsed from left to right instead of using the usual operator ordering rules, although brackets can still be used to specify precedence. For example the result of 
@@ -565,8 +583,8 @@ Version 1.0, 6 April 2007\
 {\listtext	\'a5	}multi-line FOR constructs for repeating sequences of instructions\
 {\listtext	\'a5	}curly braces text-substitute the value of one symbol into the name of another, \
 {\listtext	\'a5	}option to predefine symbols from the pyz80 command line\
+{\listtext	\'a5	}option to save and load whole symbol tables\
 {\listtext	\'a5	}saved files include only used space, and not the rest of the page\
-{\listtext	\'a5	}\
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 \cf0 \
 Version 0.6, 10 February 2006\
