@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 def printusage():
-    print "pyz80 by Andrew Collier, version 1.0 10-Apr-2007"
+    print "pyz80 by Andrew Collier, version 1.1 13-Apr-2007"
     print "http://www.intensity.org.uk/samcoupe/pyz80.html"
     print "Usage:"
     print "     pyz80 (options) inputfile(s)"
@@ -48,12 +48,6 @@ def printlicense():
     print "You should have received a copy of the GNU General Public License"
     print "along with this program; if not, write to the Free Software"
     print "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA"
-
-# KNOWN ISSUES
-# -  quoted commas, in lines where other commas are expected
-#    eg. DEFB 43,23,",",17,56
-#    I don't think this occurs very often.
-
 
 import getopt
 import sys, os
@@ -803,8 +797,11 @@ def op_DEFW(p,opargs):
 def op_DM(p,opargs):
     return op_DEFM(p,opargs)
 def op_DEFM(p,opargs):
-    match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
-    message = list(match.group(1))
+    if opargs=="(44)":
+        message = ','
+    else:
+        match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
+        message = list(match.group(1))
     if p==2:
         for i in message:
             dump ([ord(i)])
@@ -1553,9 +1550,10 @@ def assembler_pass(p, inputfile):
         
         symbol = ''
         opcode = ''
-        inquotes = 0
-        
-        for i in currentline:
+        inquotes = ''
+        inquoteliteral = False
+        i = ""
+        for nexti in currentline+" ":
             if (i==';' or i=='#') and not inquotes:
                 break
             if i==':' and not inquotes:
@@ -1564,21 +1562,42 @@ def assembler_pass(p, inputfile):
                 i = ''
             
             if i == '"':
-                inquotes = not inquotes
-                if lasti == '"':
-                # comet form of " literal
-                    i=''
-            
-            if inquotes or CASE:
+                if not inquotes:
+                    inquotes = i
+                else:
+                    if (not inquoteliteral) and nexti=='"':
+                        inquoteliteral = True
+                        
+                    elif inquoteliteral:
+                        inquoteliteral = False
+                        inquotes += i
+                        
+                    else:
+                        inquotes += i
+                    
+                        if inquotes == '""':
+                            inquotes = '"""'
+                        elif inquotes == '","':
+                            inquotes = "(44)"
+                            i = ""
+                    
+                        opcode += inquotes
+                        inquotes = ""
+            elif inquotes:
+                inquotes += i
+            elif CASE:
                 opcode += i
             else:
                 opcode += i.upper()
             
             lasti = i
+            i = nexti
         
         symbol = symbol.strip()
         opcode = opcode.strip()
         
+        if inquotes:
+            fatal("Mismatched quotes")
         
         if ' ' in symbol:
             fatal("Whitespace not allowed in symbol name")

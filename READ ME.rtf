@@ -13,7 +13,7 @@
 \f0\b\fs36 \cf0 pyz80 - a Z80 cross assembler
 \f1\b0\fs28 \
 \
-Version 1.0, released 10 April 2007\
+Version 1.1, released 13 April 2007\
 \
 By Andrew Collier\
 {\field{\*\fldinst{HYPERLINK "http://www.intensity.org.uk/contact.html"}}{\fldrslt http://www.intensity.org.uk/contact.html}}\
@@ -129,7 +129,7 @@ Only one file can be exported in this fashion. The file format is likely to be s
 
 \f1\fs28 \cf0 This option allows you to import a symbol table which had previously been saved with the corresponding 
 \f3\fs24 --exportfile
-\f1\fs28  option. All the symbols which had been defined during the first assembly run, will be available to any part of your input Z80 source.\
+\f1\fs28  option. All the symbols which had been defined during the previous assembly run, will be available to any part of your input Z80 source.\
 \
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
@@ -366,7 +366,7 @@ INC
 \
 \pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
 
-\f1\fs28 \cf0 This directive\
+\f1\fs28 \cf0 This directive assembles the specified source file starting at the current address, as though the whole file were literally included in the current one. All symbols in the included file will be available globally, and must therefore be unique (unless they are local symbols). \
 \
 (Both forms of this directive are equivalent, but 
 \f3\fs24 INCLUDE
@@ -564,6 +564,15 @@ THIS PROGRAM AND DOCUMENTATION ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIN
 \f0\b\fs36 Release History
 \f1\b0\fs28 \
 \
+Version 1.1, 13 April 2007\
+\
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
+\cf0 	\'a5	Fix a problem when the comma character is included in quoted expressions\
+	\'a5	Documentation fix for 
+\f3\fs24 INCLUDE
+\f1\fs28  directive\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\cf0 \
 Version 1.0, 10 April 2007\
 \
 \pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural

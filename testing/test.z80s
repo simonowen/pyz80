@@ -142,3 +142,43 @@ forty9: equ 49
 symbol{forty{nine}}: equ 1337
 
 assert defined(symbol49)
+
+quotestesting:
+    dm "message with a , and a "" in it"
+    
+    dm "0"
+    dm " "" "
+    dm "1"
+    dm """"
+    dm "2"
+    dm " "
+    dm "3"
+    dm ""
+    dm "4"
+    dm ","
+    dm "5"
+    dm """"""
+    dm "6"
+    dm ","""""""
+    dm "7"
+    
+    db 34
+    dm "8"
+    dm (44)
+    dm "9"
+    
+    db ""
+    dm "A"
+    db """"
+    dm "B"
+    dm ","
+    dm "C"
+    db ","
+    dm "D"
+    db "a","b",",","d"
+    dm "E"
+    db "e","","f",""""
+    dm "F"
+
+ 
+ 
