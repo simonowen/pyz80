@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
+# TODO: define and assemble macro blocks
+
 def printusage():
-    print "pyz80 by Andrew Collier, version 1.1 13-Apr-2007"
+    print "pyz80 by Andrew Collier, version 1.2 2-Feb-2009"
     print "http://www.intensity.org.uk/samcoupe/pyz80.html"
     print "Usage:"
     print "     pyz80 (options) inputfile(s)"
@@ -250,13 +252,13 @@ def save_memory(memory, image=None, filename=None):
         filelength -= 16384-lastpageoffset
         
         if (autoexecpage>0) :
-            savefilename = ("AUTO" + outputfile + "    ")[:8]+".O"
+            savefilename = ("AUTO" + filename + "    ")[:8]+".O"
         else:
-            savefilename = (outputfile + "    ")[:8]+".O"
+            savefilename = (filename + "    ")[:8]+".O"
 
         if image:
             add_file_to_disk_image(image,savefilename,firstpage, firstpageoffset, autoexecpage, autoexecorigin, filelength)
-        if filename:
+        else:
             save_memory_to_file(filename, firstpage, firstpageoffset, filelength)
 
 def save_file_to_image(image, pathname):
@@ -364,13 +366,39 @@ def get_symbol(sym):
                     if (difference < 0 or directive != '+') and (difference > 0 or directive != '-') and ((closestKey == None) or (abs(difference) < closest)):
                         closest = abs(difference)
                         closestKey = key
+
+            if (not closestKey) and (directive == '-'):
+                global include_stack
+                use_include_stack = include_stack
+                use_include_stack.reverse()
+                # try searching up the include stack
+                for include_item in use_include_stack:
+                    include_file, include_line = include_item[1].split(":",1)
+                    if not closestKey:
+                        for key in symboltable:
+                            if (sym+'@'+include_file+":").startswith(key.split(":",1)[0]+":") or (sym+'@'+include_file+":").startswith(key.split(":",1)[0]+"^"):
+                                # key is allowed fewer layers of FOR stack, but any layers it has must match
+                                # ensure a whole number (ie 1 doesn't match 11) by forceing a colon or hat
+                                symfile,symline = key.split(':')
+                                symline=int(symline)
+
+                                difference = int(include_line) - symline
+                                
+                                if (difference < 0 or directive != '+') and (difference > 0 or directive != '-') and ((closestKey == None) or (abs(difference) < closest)):
+                                    closest = abs(difference)
+                                    closestKey = key
+    
+    
+
             if closestKey != None:
                 sym = closestKey
+
+            
     
     
     if symboltable.has_key(sym):
         return symboltable[sym]
-    
+
     return None
 
 
@@ -397,16 +425,16 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
             
         else:
             break
-
     
     arg = arg.replace('$','('+str(origin)+')')
     arg = arg.replace('%','0b') # COMET syntax for binary literals (parsed later, change to save confusion with modulus)
     arg = arg.replace('\\','%') # COMET syntax for modulus
     arg = arg.replace('&','0x') # COMET syntax for hex numbers
     
-    arg = arg.replace('0X','0x') # darnit, this got capitalized
-    arg = arg.replace('0B','0b') # darnit, this got capitalized
-            
+    #    don't do these except at the start of a token:    
+    arg = re.sub('\\b0X', '0x', arg) # darnit, this got capitalized
+    arg = re.sub('\\b0B', '0b', arg) # darnit, this got capitalized
+        
 
 # if the argument contains letters at this point,
 # it's a symbol which needs to be replaced
@@ -684,6 +712,20 @@ def op_DUMP(p,opargs):
     
     return 0
 
+def op_PRINT(p, opargs):
+    text = []
+    for expr in opargs.split(","):
+        if expr.strip().startswith('"'):
+            text.append(expr.strip().rstrip()[1:-1])
+        else:
+            a = parse_expression(expr, silenterror=True)
+            if a:
+                text.append(str(a))
+            else:
+                text.append("?")
+    print global_currentfile, "PRINT: ", ",".join(text)
+    return 0
+
 def check_lastpage():
     global lastpage, lastpageoffset
     if dumppage > lastpage:
@@ -726,8 +768,8 @@ def op_EQU(p,opargs):
 
                 if existing == '':
                     set_symbol(symbol, expr_result)
-                elif existing != parse_expression(opargs, signed=1):
-                    fatal("Symbol "+expand_symbol(symbol)+": expected "+str(existing)+" but calculated "+str(parse_expression(opargs, signed=1))+", has this symbol been used twice?")
+                elif existing != expr_result:
+                    fatal("Symbol "+expand_symbol(symbol)+": expected "+str(existing)+" but calculated "+str(expr_result)+", has this symbol been used twice?")
     else:
         warning("EQU without symbol name")
     return 0
@@ -765,7 +807,7 @@ def op_DEFS(p,opargs):
         s = parse_expression(opargs)
 
     if s<0:
-        fatal("Allocated invalid space < 0 bytes")
+        fatal("Allocated invalid space < 0 bytes ("+str(s)+")")
     dumporigin += s
     dumppage += dumporigin / 16384
     dumporigin %= 16384
@@ -833,17 +875,18 @@ def op_MDAT(p,opargs):
     return filelength
 
 def op_INCLUDE(p,opargs):
-    global global_path
+    global global_path, global_currentfile
+    global include_stack
     
     savedorigin = origin
     
     match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
     filename = match.group(1)
     
-    old_path = global_path
+    include_stack.append((global_path, global_currentfile))
     assembler_pass(p, filename)
-    global_path = old_path
-    
+    global_path, global_currentfile = include_stack.pop()
+
     return 0
     # global origin has already been updated
 
@@ -1406,6 +1449,8 @@ def op_LD(p,opargs):
                 return 1
             match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", arg2)
             if match:
+                if r1 != 7:
+                    fatal("Illegal combination of operands")
                 if p==2:
                     nn = parse_expression(match.group(1), word=1)
                     dump([0x3a, nn%256, nn/256])
@@ -1641,37 +1686,37 @@ importfiles=[]
 exportfile = None
 
 for option,value in option_args:
-    if option in ('--version'):
+    if option in ['--version']:
         printusage()
         print("")
         printlicense()
         sys.exit(0)
-    if option in ('--help','-h'):
+    if option in ['--help','-h']:
         printusage()
         sys.exit(0)
     
-    if option in ('-o'):
+    if option in ['-o']:
         outputfile=value
 
-    if option in ('--obj'):
+    if option in ['--obj']:
         objectfile=value
     
-    if option in ('-s'):
+    if option in ['-s']:
         listsymbols.append(value)
     
-    if option in ('-e'):
+    if option in ['-e']:
         PYTHONERRORS = True # let python do its own error handling
     
-    if option in ('--nozip'):
-	    ZIP = False # save the disk image without compression
+    if option in ['--nozip']:
+        ZIP = False # save the disk image without compression
 
-    if option in ('--nobodmas'):
-	    NOBODMAS = True # use no operator precedence
+    if option in ['--nobodmas']:
+        NOBODMAS = True # use no operator precedence
     
-    if option in ('--case'):
+    if option in ['--case']:
         CASE = True
 
-    if option in ('--exportfile'):
+    if option in ['--exportfile']:
         if exportfile == None:
             exportfile = value
         else:
@@ -1679,13 +1724,13 @@ for option,value in option_args:
             printusage()
             sys.exit(2)
 
-    if option in  ('--importfile'):
+    if option in  ['--importfile']:
         importfiles.append(value)
 
-    if option in ('-D'):
+    if option in ['-D']:
         predefsymbols.append(value)
 
-    if option in ('-I'):
+    if option in ['-I']:
         includefiles.append(value)
 
 if len(file_args) == 0 and len(includefiles) == 0:
@@ -1760,6 +1805,7 @@ for inputfile in file_args:
         print "pass ",p,"..."
     
         global_path=''
+        include_stack=[]
     
         origin = 32768
         dumppage = 1
@@ -1797,7 +1843,7 @@ for inputfile in file_args:
         p = cPickle.Pickler(f)
         p.dump(symboltable)
 
-    save_memory(memory, image=image)
+    save_memory(memory, image=image, filename=os.path.splitext(os.path.basename(inputfile))[0])
     if objectfile != "":
         save_memory(memory, filename=objectfile)
 
