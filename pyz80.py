@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 # TODO: define and assemble macro blocks
+# added FILESIZE("filename")
+# defs doesn't cause bytes to be written to output unless real data follows
 
 def printusage():
-    print "pyz80 by Andrew Collier, version 1.2 2-Feb-2009"
+    print "pyz80 by Andrew Collier, version 1.2+ 2-Feb-2009"
     print "http://www.intensity.org.uk/samcoupe/pyz80.html"
     print "Usage:"
     print "     pyz80 (options) inputfile(s)"
@@ -435,7 +437,6 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     arg = re.sub('\\b0X', '0x', arg) # darnit, this got capitalized
     arg = re.sub('\\b0B', '0b', arg) # darnit, this got capitalized
         
-
 # if the argument contains letters at this point,
 # it's a symbol which needs to be replaced
     
@@ -443,20 +444,28 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     argcopy = ''
     
     incurly = 0
+    inquotes = False
     
     for c in arg+' ':
-        if c.isalnum() or c in "_.@{}" or (c=="+" and testsymbol=='@') or (c=="-" and testsymbol=='@') or incurly:
+        if c.isalnum() or c in '"_.@{}' or (c=="+" and testsymbol=='@') or (c=="-" and testsymbol=='@') or incurly or inquotes:
             testsymbol += c
             if c=='{':
                 incurly += 1
             elif c=='}':
                 incurly -= 1
+            elif c=='"':
+                inquotes = not inquotes
+
+
         else:
             if (testsymbol != ''):
                 if not testsymbol[0].isdigit():
                     result = get_symbol(testsymbol)
                     if (result != None):
                         testsymbol = str(result)
+                    elif testsymbol[0] == '"' and testsymbol[-1]=='"':
+                        # string literal used in some expressions
+                        pass
                     else:
                         understood = 0
                         # some of python's math expressions should be available to the parser
@@ -476,12 +485,17 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
                             except:
                                 understood = 0
                         
-                        if not understood:
+                        if testsymbol in ["FILESIZE"]:
+                            parsestr = 'os.path.getsize'
+                            understood = 1
+                        
+                        if not understood :
                             if silenterror:
                                 return ''
                             fatal("Error in expression "+arg+": Undefined symbol "+expand_symbol(testsymbol))
                         
                         testsymbol = parsestr
+                        
                 elif testsymbol[0]=='0' and len(testsymbol)>2 and testsymbol[1]=='b':
                 # binary literal
                     literal = 0
@@ -504,7 +518,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
             argcopy += c
     
     if NOBODMAS:
-        # add bracket pairs at interesting locations to simulate let-to-right evaluation
+        # add bracket pairs at interesting locations to simulate left-to-right evaluation
         
         aslist = list(argcopy) # turn it into a list so that we can add characters without affecting indexes
         bracketstack=[0]
@@ -657,9 +671,14 @@ def dump(bytes):
         while len(memory[page]) < 16384:
             memory[page].extend(memory[page])
     
-    global dumppage, dumporigin
+    global dumppage, dumporigin, dumpspace_pending
     
     if (p==2):
+        if dumpspace_pending > 0:
+            dumporigin += dumpspace_pending
+            dumppage += dumporigin / 16384
+            dumporigin %= 16384
+            dumpspace_pending = 0
         
         if memory[dumppage]=='':
             initpage(dumppage)
@@ -692,8 +711,9 @@ def op_ORG(p,opargs):
     return 0
 
 def op_DUMP(p,opargs):
-    global dumppage, dumporigin, firstpage, firstpageoffset
+    global dumppage, dumporigin, firstpage, firstpageoffset, dumpspace_pending
     check_lastpage()
+    dumpspace_pending = 0
     if ',' in opargs:
         page,offset = opargs.split(',',1)
         offset = parse_expression(offset, word=1)
@@ -795,7 +815,7 @@ def op_NEXT(p,opargs):
 def op_DS(p,opargs):
     return op_DEFS(p,opargs)
 def op_DEFS(p,opargs):
-    global dumppage, dumporigin
+    global dumppage, dumporigin, dumpspace_pending
     check_args(opargs,1)
     
     if opargs.upper().startswith("ALIGN") and (opargs[5].isspace() or opargs[5]=='('):
@@ -808,9 +828,7 @@ def op_DEFS(p,opargs):
 
     if s<0:
         fatal("Allocated invalid space < 0 bytes ("+str(s)+")")
-    dumporigin += s
-    dumppage += dumporigin / 16384
-    dumporigin %= 16384
+    dumpspace_pending += s
     return s
 
 def op_DB(p,opargs):
@@ -1810,6 +1828,7 @@ for inputfile in file_args:
         origin = 32768
         dumppage = 1
         dumporigin = 0
+        dumpspace_pending = 0
         autoexecpage = 0
         autoexecorigin = 0
     
