@@ -1,5 +1,5 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf110
-{\fonttbl\f0\fnil\fcharset0 HelveticaNeue;\f1\fswiss\fcharset0 ArialMS;\f2\fnil\fcharset0 Monaco;
+{\rtf1\ansi\ansicpg1252\cocoartf1187\cocoasubrtf390
+\cocoascreenfonts1{\fonttbl\f0\fnil\fcharset0 HelveticaNeue;\f1\fswiss\fcharset0 Helvetica;\f2\fnil\fcharset0 Monaco;
 }
 {\colortbl;\red255\green255\blue255;\red0\green19\blue125;}
 {\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid1\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid1}
@@ -8,12 +8,12 @@
 {\list\listtemplateid4\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid301\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid4}}
 {\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}{\listoverride\listid4\listoverridecount0\ls4}}
 \paperw11900\paperh16840\margl1440\margr1440\vieww14660\viewh15120\viewkind0
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\b\fs36 \cf0 pyz80 - a Z80 cross assembler
 \b0\fs28 \
 \
-Version 1.2, released 2 February 2009\
+Version 1.21, released 11 July 2013\
 \
 By Andrew Collier\
 {\field{\*\fldinst{HYPERLINK "http://www.intensity.org.uk/contact.html"}}{\fldrslt http://www.intensity.org.uk/contact.html}}\
@@ -26,11 +26,11 @@ pyz80 is an assembler for the assembly language of the Z80 micro-processor.\
 \
 It is designed in particular for producing code to run on the Sam Coup\'e9 computer, and outputs disk images  which can be loaded by the SimCoupe emulator, or copied onto floppy disk for use with genuine hardware Sams. Nonetheless, it may be useful for users of other Z80-based platforms as well.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardeftab720\sa160\ql\qnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardeftab720\sa160
 
 \f1 \cf0 pyz80 is distributed under the terms of the {\field{\*\fldinst{HYPERLINK "http://www.gnu.org/licenses/gpl.html"}}{\fldrslt \cf2 \ul \ulc2 GNU General Public License}}. You can download and use it at no cost. See the file COPYING for more information.
 \f0 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 \cf0 \
 
 \b\fs36 Installation
@@ -39,10 +39,10 @@ It is designed in particular for producing code to run on the Sam Coup\'e9 compu
 pyz80 is written in python, and should work on MacOS X, Linux, Windows and other platforms if the appropriate interpreter is installed.\
 \
 If you do not have python already, installers can be downloaded from:\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 {\field{\*\fldinst{HYPERLINK "http://www.python.org/download/"}}{\fldrslt \cf0 http://www.python.org/download/}}\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \b\fs36 \cf0 Usage\
 
@@ -57,28 +57,28 @@ This will assemble the source file, and generate a disk image which contains the
 \
 You can also add options (before the source files) to change details about the operation of pyz80:\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 -o outputfile\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 This option allows you to specify the name of the generated disk image. If this option is not given, the name is chosen based on the filename of the input source file (or the first input source file, if you have specified more than one).
 \b\fs36 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\b0\fs24 \cf0 \
 --nozip\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 If this option is given, then the generated disk image will not be compressed. Otherwise, it will be compressed using gzip.\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 \
 -I filepath\
    \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 This option allows you to add an extra file to the disk image. It will be added to the directory before any assembled files, so for example you could add the "SAMDOS" file to the image to make it bootable.\
 \
@@ -91,12 +91,12 @@ e.g.
 \f0\fs28 \
 \
 Only code files can be added in this manner, they start at address 32768 and do not auto-execute. If you wish to change the start or execute address of the file, you will need to create a small Z80 source input file containing an MDAT directive. See the Syntax section for further details.\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 \
 --obj=outputfile\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 This option allows you to save the generated code as a raw binary file, instead of part of a disk image. If you specify this option, no disk image will be generated (unless you also explicitly specify an output disk image file name).\
 \
@@ -121,17 +121,17 @@ Since every symbol must have an integer value, if nothing is specified then 1 wi
 \
 Only one file can be exported in this fashion. The file format is likely to be specific to the version of python in use.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 --importfile=file\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 This option allows you to import a symbol table which had previously been saved with the corresponding 
 \f2\fs24 --exportfile
 \f0\fs28  option. All the symbols which had been defined during the previous assembly run, will be available to any part of your input Z80 source.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 --case\
    
@@ -151,7 +151,7 @@ If this option is given, then all expressions will be parsed from left to right 
 
 \f2\fs24 -s regexp\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 This option allows you to print out the final value of one or more symbols at the end of assembling a source file. If you specify the text name of a particular symbol, pyz80 will print out the value of that symbol, and any others whose name completely contains what you have asked for:\
 \
@@ -172,11 +172,11 @@ e.g.
 \f2\fs24 regexp
 \f0\fs28  is a regular expression in python's format; if any part of a symbol matches the expression, then the symbol will be printed.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 -e\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 If there are errors in the source code, pyz80 will attempt to diagnose the problem and tell you which line of the input Z80 source file is causing the problem. Occasionally, however, it can be difficult to see what mistake in that line is causing the confusion. If this option was specified on the command line, pyz80 will allow the python interpreter to print out its own messages about the problems it found, which may provide more detailed information.\
 
@@ -190,7 +190,7 @@ Each line of the source file may contain one symbol definition, and one Z80 inst
 \
 Comments start with semicolon and continue to the end of the line.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \b \cf0 Instructions
 \b0 \
@@ -217,7 +217,7 @@ The undocumented compound instructions (shift and rotate instructions which oper
 e.g.	 	
 \f2\fs24 ROT r, (IX+c)\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 Undocumented instruction 
 \f2\fs24 SLL
@@ -225,7 +225,7 @@ e.g.
 \f2\fs24 SL1
 \f0\fs28  instead.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \b \cf0 Symbols
 \b0 \
@@ -251,7 +251,7 @@ e.g.
 	@loop:	call office\
 		dec b\
 		jr nz, @loop\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 \
 \
@@ -273,12 +273,12 @@ e.g.
 \f2\fs24 ld a, defined(DEBUG)
 \f0\fs28 \
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \b \cf0 Assembler directives
 \b0 \
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 ORG address
 \f0\fs28 \
@@ -300,7 +300,7 @@ Specify the destination address of the code output. This directive is available 
 \
 
 \f2\fs24 AUTOEXEC\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 \
 The current 
@@ -344,17 +344,17 @@ DS ALIGN n\
 \
 
 \f0\fs28 This ensures that the following instruction will be aligned on the boundary specified, by leaving a space if necessary.\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 \
 MDAT "filename"
 \f0\fs28 \
 
 \f2\fs24 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 This directive merges a data file from the host filesystem into the object code at the current address. filename is enclosed in double-quotes and is expressed relatively to the file currently being assembled.\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 \
 INC
@@ -364,7 +364,7 @@ INC
 
 \f2\fs24 INCLUDE "filename"\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 This directive assembles the specified source file starting at the current address, as though the whole file were literally included in the current one. All symbols in the included file will be available globally, and must therefore be unique (unless they are local symbols). \
 \
@@ -406,12 +406,12 @@ NEXT symbol\
 \f2\fs24 range-1
 \f0\fs28 .\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 FOR...NEXT 
 \f0\fs28 blocks can be nested, with each layer using a different symbol name.
 \f2\fs24 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 \
 Where a local symbol is defined within a 
@@ -442,37 +442,37 @@ e.g.
 \
 
 \f0\fs28 Note that any symbols used in the expression must be available in the first pass of the assembler (i.e. they must be defined earlier in the file than they are used).\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 \
 ASSERT condition\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f0\fs28 \cf0 \
 This directive evaluates whether 
 \f2\fs24 condition
 \f0\fs28  is true, and aborts assembly if not. For example, this can be used to ensure that the size of your code has not overstepped any limits you may be imposing.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 PRINT expression1[, expression2 ...]\
 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 
 \f0\fs28 \cf0 Prints the result of the expressions as soon as they are evaluated during assembly. Can be useful for logging and debugging, and showing the value of symbols (as an alternative to the 
 \f2\fs24 -s
 \f0\fs28  command line option)\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 \cf0 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \b \cf0 Expressions and special characters\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \b0 \cf0 \
 Wherever an instruction or directive requires a number, a mathematical expression can be used instead. These are allowed to contain any symbol names defined in the file. If the result of an expression is negative, it will appear in the instruction in two's complement.\
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \f2\fs24 \cf0 $	
 \f0\fs28 a symbol representing the address of the current instruction\
@@ -540,7 +540,7 @@ angle
 pi	
 \f0\fs28  \
 \
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 
 \b\fs36 \cf0 Thanks
 \b0\fs28 \
@@ -575,9 +575,16 @@ THIS PROGRAM AND DOCUMENTATION ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIN
 \b\fs36 Release History
 \b0\fs28 \
 \
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
+\cf0 Version 1.21, 11 July 2013\
+\
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\pardirnatural
+\cf0 	\'95	A symbol name could include tab characters, which should be treated as a source error (reported by Chris Pile)\
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
+\cf0 \
 Version 1.2, 2 February 2009\
 \
-\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\pardirnatural
 \cf0 	\'95	Add 
 \f2\fs24 PRINT
 \f0\fs28  directive\
@@ -586,20 +593,20 @@ Version 1.2, 2 February 2009\
 	\'95	Fixed options --obj and -o were incorrectly conflicting (reported by Thomas Harte)\
 	\'95	Fixed symbol names containing strings 0b and 0x were misparsed (fixed by Simon Owen)\
 	\'95	Fixed a misparseing of incorrect instructions of the form LD H,(23) (reported by Thomas Harte)\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 \cf0 \
 Version 1.1, 13 April 2007\
 \
-\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\pardirnatural
 \cf0 	\'95	Fix a problem when the comma character is included in quoted expressions\
 	\'95	Documentation fix for 
 \f2\fs24 INCLUDE
 \f0\fs28  directive\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 \cf0 \
 Version 1.0, 10 April 2007\
 \
-\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\pardirnatural
 \ls1\ilvl0\cf0 {\listtext	\'95	}option to include other files on the resulting disk image, or multiple object files\
 {\listtext	\'95	}IXh, IXl, IYh and IYl can be used in operands where this forms a valid (undocumented) instruction\
 {\listtext	\'95	}fixed ex (sp),ix\
@@ -618,11 +625,11 @@ Version 1.0, 10 April 2007\
 {\listtext	\'95	}option to predefine symbols from the pyz80 command line\
 {\listtext	\'95	}option to save and load whole symbol tables\
 {\listtext	\'95	}saved files include only used space, and not the rest of the page\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 \cf0 \
 Version 0.6, 10 February 2006\
 \
-\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\pardirnatural
 \ls2\ilvl0\cf0 {\listtext	\'95	}implemented SLL (with a warning)\
 {\listtext	\'95	}use directive AUTOEXEC (usually straight after a DUMP) to set automatic execution of code from the current target address\
 {\listtext	\'95	}simple test to stop output file overwriting source file\
@@ -633,11 +640,11 @@ Version 0.6, 10 February 2006\
 {\listtext	\'95	}added -e option (lets you see python's error messages directly)\
 {\listtext	\'95	}allow . in symbol names\
 {\listtext	\'95	}file doesn't have to start at page boundary (helpful for writing boot sectors and stuff)\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 \cf0 \
 Version 0.5, 15 January 2005\
 \
-\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\pardirnatural
 \ls3\ilvl0\cf0 {\listtext	\'95	}new pseudo-opcode: FOR limit, codeseq\
 {\listtext	\'95	}allow % as a prefix to binary numbers\
 {\listtext	\'95	}fix LD (IX+n),n\
@@ -655,12 +662,12 @@ Version 0.5, 15 January 2005\
 {\listtext	\'95	}allow underscore character in symbol names, and sanity check for syntax errors\
 {\listtext	\'95	}print a subset of the symbol table after assembly is complete\
 {\listtext	\'95	}files included by files included along a relative path will search for their files on that path\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 \cf0 \
 Version 0.1, 19 November 2004\
 \
-\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\ql\qnatural\pardirnatural
+\pard\tx220\tx720\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\li720\fi-720\pardirnatural
 \ls4\ilvl0\cf0 {\listtext	\'95	}initial release\
-\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\ql\qnatural\pardirnatural
+\pard\tx1133\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural
 \cf0 \
 }
