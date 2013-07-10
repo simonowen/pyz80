@@ -1662,7 +1662,7 @@ def assembler_pass(p, inputfile):
         if inquotes:
             fatal("Mismatched quotes")
         
-        if ' ' in symbol:
+        if len( symbol.split()) > 1:
             fatal("Whitespace not allowed in symbol name")
         
         if (symbol and (opcode[0:3].upper() !="EQU") and (ifstate < 2)):
