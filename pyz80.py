@@ -1257,6 +1257,8 @@ def op_JR(p,opargs):
         cond = condition(args[0])
         if cond == '':
             fatal ("Expected condition, received "+opargs)
+        elif cond >= 4:
+            fatal ("Invalid condition for JR")
         instr = 0x20 + 8*cond
     if (p==2):
         target = parse_expression(args[-1],word=1)
