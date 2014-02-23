@@ -1375,7 +1375,7 @@ def op_LD(p,opargs):
     if rr1 != '':
         prefix2, rr2 = double(arg2)
         if rr1==3 and rr2==2:
-            instr = prefix
+            instr = prefix2
             instr.append(0xf9)
             dump(instr)
             return len(instr)
