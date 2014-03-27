@@ -857,7 +857,7 @@ def op_DEFW(p,opargs):
 def op_DM(p,opargs):
     return op_DEFM(p,opargs)
 def op_DEFM(p,opargs):
-    if opargs=="(44)":
+    if opargs.strip()=="44":
         message = ','
     else:
         match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
@@ -1643,7 +1643,7 @@ def assembler_pass(p, inputfile):
                         if inquotes == '""':
                             inquotes = '"""'
                         elif inquotes == '","':
-                            inquotes = "(44)"
+                            inquotes = " 44 "
                             i = ""
                     
                         opcode += inquotes
