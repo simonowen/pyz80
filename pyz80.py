@@ -1589,6 +1589,8 @@ def assemble_instruction(p, line):
         else:
             try:
                 return eval(functioncall)
+            except SystemExit as e:
+                sys.exit(e)
             except:
                 fatal("OpCode not recognised")
     else:
