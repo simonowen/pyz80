@@ -812,6 +812,20 @@ def op_NEXT(p,opargs):
     
     return 0
 
+def op_ALIGN(p,opargs):
+    global dumpspace_pending
+    check_args(opargs,1)
+
+    align = parse_expression(opargs)
+    if align<1:
+        fatal("Invalid alignment")
+    elif (align & (-align)) != align:
+        fatal("Alignment is not a power of 2")
+
+    s = (align - origin%align)%align
+    dumpspace_pending += s
+    return s;
+
 def op_DS(p,opargs):
     return op_DEFS(p,opargs)
 def op_DEFS(p,opargs):
@@ -819,13 +833,9 @@ def op_DEFS(p,opargs):
     check_args(opargs,1)
     
     if opargs.upper().startswith("ALIGN") and (opargs[5].isspace() or opargs[5]=='('):
-        align = parse_expression(opargs[5:].strip())
-        if align<1:
-            fatal("Invalid alignment")
-        s = (align - origin%align)%align
-    else:
-        s = parse_expression(opargs)
+        return op_ALIGN(p,opargs[5:].strip())
 
+    s = parse_expression(opargs)
     if s<0:
         fatal("Allocated invalid space < 0 bytes ("+str(s)+")")
     dumpspace_pending += s
