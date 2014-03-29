@@ -1461,6 +1461,12 @@ def op_LD(p,opargs):
             if (r1==4 or r1==5) and (r2==4 or r2==5) and prefix1 != prefix2:
                 fatal("Illegal combination of operands")
             
+            if r1==6 and (r2==4 or r2==5) and len(prefix2) != 0:
+                fatal("Illegal combination of operands")
+
+            if r2==6 and (r1==4 or r1==5) and len(prefix1) != 0:
+                fatal("Illegal combination of operands")
+
             instr = prefix1
             if len(prefix1) == 0:
                 instr.extend(prefix2)
