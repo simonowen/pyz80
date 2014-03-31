@@ -1076,6 +1076,10 @@ def op_register_arg_type(p,opargs,offset,ninstr,step_per_register=1):
     pre,r,post = single(opargs,allow_half=1)
     instr = pre
     if r=='':
+        match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", opargs)
+        if match:
+            fatal ("Illegal indirection")
+
         instr.extend(ninstr)
         if (p==2):
             n = parse_expression(opargs, byte=1)
@@ -1139,6 +1143,10 @@ def op_add_type(p,opargs,rinstr,ninstr,rrinstr,step_per_register=1,step_per_pair
         pre,r,post = single(args[-1])
         instr = pre
         if r=='':
+            match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[-1])
+            if match:
+                fatal ("Illegal indirection")
+
             instr.extend(ninstr)
             if (p==2):
                 n = parse_expression(args[-1], byte=1)
@@ -1226,6 +1234,10 @@ def op_jumpcall_type(p,opargs,offset, condoffset):
         if cond == '':
             fatal ("Expected condition, received "+opargs)
         instr = [condoffset + 8*cond]
+
+    match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[-1])
+    if match:
+        fatal ("Illegal indirection")
     
     if (p==2):
         nn = parse_expression(args[-1],word=1)
@@ -1489,7 +1501,7 @@ def op_LD(p,opargs):
             match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", arg2)
             if match:
                 if r1 != 7:
-                    fatal("Illegal combination of operands")
+                    fatal("Illegal indirection")
                 if p==2:
                     nn = parse_expression(match.group(1), word=1)
                     dump([0x3a, nn%256, nn/256])
