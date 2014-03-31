@@ -1477,6 +1477,9 @@ def op_LD(p,opargs):
             return len(instr)
         
         else:
+            if r1 > 7:
+                fatal("Invalid argument")
+
             if r1==7 and re.search("\A\s*\(\s*BC\s*\)\s*\Z", arg2, re.IGNORECASE):
                 dump([0x0a])
                 return 1
