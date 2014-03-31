@@ -1342,9 +1342,8 @@ def op_EX(p,opargs):
         pre1,rr1 = double(args[0],allow_af_instead_of_sp=1, allow_index=0)
         pre2,rr2 = double(args[1],allow_af_instead_of_sp=1, allow_af_alt=1, allow_index=0)
     
-        if ( rr1==1 and rr2==2 ) or ( rr1==2 and rr2==1):
+        if rr1==1 and rr2==2:
             # EX DE,HL
-            # or EX HL,DE (can't bring myself to disallow this alternative syntax)
             instr = pre1
             instr.extend(pre2)
             instr.append(0xeb)
