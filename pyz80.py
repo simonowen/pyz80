@@ -469,7 +469,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
                     else:
                         understood = 0
                         # some of python's math expressions should be available to the parser
-                        if not understood:
+                        if not understood and testsymbol.lower() != 'e':
                             parsestr = 'math.'+testsymbol.lower()
                             try:
                                 eval(parsestr)
