@@ -27,6 +27,8 @@ def printusage():
     print "   Save all symbol information into the given file"
     print "--importfile=filename"
     print "   Define symbols before assembly, from a file previously exported"
+    print "--mapfile=filename"
+    print "   Save address-to-symbol map into the given file"
     print "--case"
     print "   treat source labels as case sensitive (as COMET itself did)"
     print "--nobodmas"
@@ -331,13 +333,15 @@ def file_and_stack(explicit_currentfile=None):
         s=s+"^"+str(i[2])
     return f+s+':'+l
 
-def set_symbol(sym, value, explicit_currentfile=None):
+def set_symbol(sym, value, explicit_currentfile=None, is_label=False):
     sym = expand_symbol(sym)
 
     if sym[0]=='@':
         sym = sym + '@' + file_and_stack(explicit_currentfile=explicit_currentfile)
     symboltable[sym] = value 
 
+    if is_label:
+        labeltable[sym] = value
 
 def get_symbol(sym):
     sym = expand_symbol(sym)
@@ -399,6 +403,7 @@ def get_symbol(sym):
     
     
     if symboltable.has_key(sym):
+        symusetable[sym] = symusetable.get(sym,0)+1
         return symboltable[sym]
 
     return None
@@ -1611,7 +1616,7 @@ def assemble_instruction(p, line):
         return 0
 
 def assembler_pass(p, inputfile):
-    global memory, symboltable, origin, dumppage, dumporigin, symbol
+    global memory, symboltable, symusetable, labeltable, origin, dumppage, dumporigin, symbol
     global global_currentfile, global_currentline
 # file references are local, so assembler_pass can be called recursively (for op_INC)
 # but copied to a global identifier for warning printouts
@@ -1701,7 +1706,7 @@ def assembler_pass(p, inputfile):
         
         if (symbol and (opcode[0:3].upper() !="EQU") and (ifstate < 2)):
             if p==1:
-                set_symbol(symbol, origin)
+                set_symbol(symbol, origin, is_label=True)
             elif get_symbol(symbol) != origin:
                 fatal("Symbol "+symbol+": expected "+str(get_symbol(symbol))+" but calculated "+str(origin)+", has this symbol been used twice?")
         
@@ -1717,7 +1722,7 @@ def assembler_pass(p, inputfile):
 ###########################################################################
 
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','obj=','case','nobodmas','exportfile=','importfile='])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','obj=','case','nobodmas','exportfile=','importfile=','mapfile='])
 except getopt.GetoptError:
     printusage()
     sys.exit(2)
@@ -1736,6 +1741,7 @@ predefsymbols=[]
 includefiles=[]
 importfiles=[]
 exportfile = None
+mapfile = None
 
 for option,value in option_args:
     if option in ['--version']:
@@ -1779,6 +1785,14 @@ for option,value in option_args:
     if option in  ['--importfile']:
         importfiles.append(value)
 
+    if option in ['--mapfile']:
+        if mapfile == None:
+            mapfile = value
+        else:
+            print "Map file specified twice"
+            printusage()
+            sys.exit(2)
+
     if option in ['-D']:
         predefsymbols.append(value)
 
@@ -1811,6 +1825,8 @@ for inputfile in file_args:
         sys.exit(2)
 
     symboltable = {}
+    symusetable = {}
+    labeltable = {}
     memory = []
     forstack=[]
     ifstack = []
@@ -1895,6 +1911,16 @@ for inputfile in file_args:
         f = open(exportfile,'w')
         p = cPickle.Pickler(f)
         p.dump(symboltable)
+
+    if mapfile:
+        addrmap = {}
+        for sym,count in sorted(symusetable.items(), key=lambda x: x[1]):
+            if labeltable.has_key(sym):
+                addrmap[labeltable[sym]] = sym
+
+        with open(mapfile,'w') as f:
+            for addr,sym in sorted(addrmap.items()):
+                f.write("%04X=%s\n" % (addr,sym))
 
     save_memory(memory, image=image, filename=os.path.splitext(os.path.basename(inputfile))[0])
     if objectfile != "":
