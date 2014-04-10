@@ -334,17 +334,20 @@ def file_and_stack(explicit_currentfile=None):
     return f+s+':'+l
 
 def set_symbol(sym, value, explicit_currentfile=None, is_label=False):
-    sym = expand_symbol(sym)
+    symorig = expand_symbol(sym)
+    sym = symorig if CASE else symorig.upper()
 
     if sym[0]=='@':
         sym = sym + '@' + file_and_stack(explicit_currentfile=explicit_currentfile)
     symboltable[sym] = value 
+    symbolcase[sym] = symorig
 
     if is_label:
         labeltable[sym] = value
 
 def get_symbol(sym):
-    sym = expand_symbol(sym)
+    symorig = expand_symbol(sym)
+    sym = symorig if CASE else symorig.upper()
  
     if sym[0]=='@':
         if symboltable.has_key(sym + '@' + file_and_stack()):
@@ -1687,10 +1690,8 @@ def assembler_pass(p, inputfile):
                         inquotes = ""
             elif inquotes:
                 inquotes += i
-            elif CASE:
-                opcode += i
             else:
-                opcode += i.upper()
+                opcode += i
             
             lasti = i
             i = nexti
@@ -1825,6 +1826,7 @@ for inputfile in file_args:
         sys.exit(2)
 
     symboltable = {}
+    symbolcase = {}
     symusetable = {}
     labeltable = {}
     memory = []
@@ -1846,8 +1848,7 @@ for inputfile in file_args:
             except:
                 print("Error: Invalid value for symbol predefined on command line, "+value)
                 sys.exit(1)
-    
-        symboltable[sym[0]]=int(sym[1])
+        set_symbol(sym[0], int(sym[1]))
 
     for picklefilename in importfiles:
         picklefile = open(picklefilename)
@@ -1902,7 +1903,7 @@ for inputfile in file_args:
         # add to printsymbols any pair from symboltable whose key matches symreg
         for sym in symboltable:
             if re.search(symreg, sym, re.IGNORECASE):
-                printsymbols[sym] = symboltable[sym]
+                printsymbols[symbolcase[sym]] = symboltable[sym]
 
     if printsymbols != {}:
         print printsymbols
@@ -1916,7 +1917,7 @@ for inputfile in file_args:
         addrmap = {}
         for sym,count in sorted(symusetable.items(), key=lambda x: x[1]):
             if labeltable.has_key(sym):
-                addrmap[labeltable[sym]] = sym
+                addrmap[labeltable[sym]] = symbolcase[sym]
 
         with open(mapfile,'w') as f:
             for addr,sym in sorted(addrmap.items()):
