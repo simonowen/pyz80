@@ -719,8 +719,12 @@ def op_ORG(p,opargs):
     return 0
 
 def op_DUMP(p,opargs):
-    global dumppage, dumporigin, firstpage, firstpageoffset, dumpspace_pending
-    check_lastpage()
+    global dumppage, dumporigin, dumpused, firstpage, firstpageoffset, dumpspace_pending
+
+    if dumpused:
+        check_lastpage()
+    dumpused = True
+
     dumpspace_pending = 0
     if ',' in opargs:
         page,offset = opargs.split(',',1)
@@ -1880,6 +1884,7 @@ for inputfile in file_args:
         dumppage = 1
         dumporigin = 0
         dumpspace_pending = 0
+        dumpused = False
         autoexecpage = 0
         autoexecorigin = 0
     
