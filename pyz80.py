@@ -1,59 +1,61 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 # TODO: define and assemble macro blocks
 # added FILESIZE("filename")
 # defs doesn't cause bytes to be written to output unless real data follows
 
 def printusage():
-    print "pyz80 by Andrew Collier, version 1.2+ 2-Feb-2009"
-    print "http://www.intensity.org.uk/samcoupe/pyz80.html"
-    print "Usage:"
-    print "     pyz80 (options) inputfile(s)"
-    print "Options:" 
-    print "-o outputfile"
-    print "   save the resulting disk image at the given path"
-    print "--nozip"
-    print "   do not compress the resulting disk image"
-    print "-I filepath"
-    print "   Add this file to the disk image before assembling"
-    print "   May be used multiple times to add multiple files"
-    print "--obj=outputfile"
-    print "   save the output code as a raw binary file at the given path"
-    print "-D symbol"
-    print "-D symbol=value"
-    print "   Define a symbol before parseing the source"
-    print "   (value is integer; if omitted, assume 1)"
-    print "--exportfile=filename"
-    print "   Save all symbol information into the given file"
-    print "--importfile=filename"
-    print "   Define symbols before assembly, from a file previously exported"
-    print "--mapfile=filename"
-    print "   Save address-to-symbol map into the given file"
-    print "--case"
-    print "   treat source labels as case sensitive (as COMET itself did)"
-    print "--nobodmas"
-    print "   treat arithmetic operators without precedence (as COMET itself did)"
-    print "-s regexp"
-    print "   print the value of any symbols matching the given regular expression"
-    print "   This may be used multiple times to output more than one subset"
-    print "-e"
-    print "   use python's own error handling instead of trying to catch parse errors"
+    print("pyz80 by Andrew Collier, version 1.2+ 2-Feb-2009")
+    print("http://www.intensity.org.uk/samcoupe/pyz80.html")
+    print("Usage:")
+    print("     pyz80 (options) inputfile(s)")
+    print("Options:")
+    print("-o outputfile")
+    print("   save the resulting disk image at the given path")
+    print("--nozip")
+    print("   do not compress the resulting disk image")
+    print("-I filepath")
+    print("   Add this file to the disk image before assembling")
+    print("   May be used multiple times to add multiple files")
+    print("--obj=outputfile")
+    print("   save the output code as a raw binary file at the given path")
+    print("-D symbol")
+    print("-D symbol=value")
+    print("   Define a symbol before parseing the source")
+    print("   (value is integer; if omitted, assume 1)")
+    print("--exportfile=filename")
+    print("   Save all symbol information into the given file")
+    print("--importfile=filename")
+    print("   Define symbols before assembly, from a file previously exported")
+    print("--mapfile=filename")
+    print("   Save address-to-symbol map into the given file")
+    print("--case")
+    print("   treat source labels as case sensitive (as COMET itself did)")
+    print("--nobodmas")
+    print("   treat arithmetic operators without precedence (as COMET itself did)")
+    print("-s regexp")
+    print("   print the value of any symbols matching the given regular expression")
+    print("   This may be used multiple times to output more than one subset")
+    print("-e")
+    print("   use python's own error handling instead of trying to catch parse errors")
     
 
 def printlicense():
-    print "This program is free software; you can redistribute it and/or modify"
-    print "it under the terms of the GNU General Public License as published by"
-    print "the Free Software Foundation; either version 2 of the License, or"
-    print "(at your option) any later version."
-    print " "
-    print "This program is distributed in the hope that it will be useful,"
-    print "but WITHOUT ANY WARRANTY; without even the implied warranty of"
-    print "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
-    print "GNU General Public License for more details."
-    print " "
-    print "You should have received a copy of the GNU General Public License"
-    print "along with this program; if not, write to the Free Software"
-    print "Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA"
+    print("This program is free software; you can redistribute it and/or modify")
+    print("it under the terms of the GNU General Public License as published by")
+    print("the Free Software Foundation; either version 2 of the License, or")
+    print("(at your option) any later version.")
+    print(" ")
+    print("This program is distributed in the hope that it will be useful,")
+    print("but WITHOUT ANY WARRANTY; without even the implied warranty of")
+    print("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the")
+    print("GNU General Public License for more details.")
+    print(" ")
+    print("You should have received a copy of the GNU General Public License")
+    print("along with this program; if not, write to the Free Software")
+    print("Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA")
 
 import getopt
 import sys, os
@@ -63,7 +65,12 @@ import re
 import gzip
 import math # for use by expressions in source files
 import random
-import cPickle
+
+# Try for native pickle (2.x), fall back on Python version (3.x)
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 def new_disk_image():
     
@@ -304,12 +311,12 @@ def save_memory_to_file(filename, firstusedpage, firstpageoffset, filelength):
     objfile.close()
 
 def warning(message):
-    print 'Warning:', message
-    print global_currentfile,'"'+global_currentline.strip()+'"'
+    print('Warning:', message)
+    print(global_currentfile,'"'+global_currentline.strip()+'"')
 
 def fatal(message):
-    print 'Error:', message
-    print global_currentfile,'"'+global_currentline.strip()+'"'
+    print('Error:', message)
+    print(global_currentfile,'"'+global_currentline.strip()+'"')
     sys.exit(1)
 
 def expand_symbol(sym):
@@ -547,7 +554,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
         argcopy2=""
         for entry in aslist:
             argcopy2 += entry
-    #    print argcopy,"->",argcopy2
+    #    print(argcopy,"->",argcopy2)
         argcopy = argcopy2
     
     farg = eval(argcopy)
@@ -556,7 +563,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     else:
         farg -= 0.5
     narg = int(farg)
-#    print arg, " -> ",argcopy," == ",narg
+#    print(arg, " -> ",argcopy," == ",narg)
     
     if signed:
         if byte:
@@ -755,7 +762,7 @@ def op_PRINT(p, opargs):
                 text.append(str(a))
             else:
                 text.append("?")
-    print global_currentfile, "PRINT: ", ",".join(text)
+    print(global_currentfile, "PRINT: ", ",".join(text))
     return 0
 
 def check_lastpage():
@@ -1787,7 +1794,7 @@ for option,value in option_args:
         if exportfile == None:
             exportfile = value
         else:
-            print "Export file specified twice"
+            print("Export file specified twice")
             printusage()
             sys.exit(2)
 
@@ -1798,7 +1805,7 @@ for option,value in option_args:
         if mapfile == None:
             mapfile = value
         else:
-            print "Map file specified twice"
+            print("Map file specified twice")
             printusage()
             sys.exit(2)
 
@@ -1809,12 +1816,12 @@ for option,value in option_args:
         includefiles.append(value)
 
 if len(file_args) == 0 and len(includefiles) == 0:
-    print "No input file specified"
+    print("No input file specified")
     printusage()
     sys.exit(2)
 
 if (objectfile != '') and (len(file_args) != 1):
-    print "Object file output supports only a single source file"
+    print("Object file output supports only a single source file")
     printusage()
     sys.exit(2)
 
@@ -1829,7 +1836,7 @@ for pathname in includefiles:
 for inputfile in file_args:
 
     if (inputfile == outputfile) or (inputfile == objectfile):
-        print "Output file and input file are the same!"
+        print("Output file and input file are the same!")
         printusage()
         sys.exit(2)
 
@@ -1860,7 +1867,7 @@ for inputfile in file_args:
 
     for picklefilename in importfiles:
         picklefile = open(picklefilename)
-        u = cPickle.Unpickler(picklefile)
+        u = pickle.Unpickler(picklefile)
         ImportSymbols = u.load()
         for sym,val in ImportSymbols.items():
             if not CASE:
@@ -1879,7 +1886,7 @@ for inputfile in file_args:
         memory.append('')
 
     for p in 1,2:
-        print "pass ",p,"..."
+        print("pass ",p,"...")
     
         global_path=''
         include_stack=[]
@@ -1899,12 +1906,12 @@ for inputfile in file_args:
     if len(ifstack) > 0:
         print("Error: Mismatched IF and ENDIF statements, too many IF")
         for item in ifstack:
-            print item[0]
+            print(item[0])
         sys.exit(1)
     if len(forstack) > 0:
         print("Error: Mismatched EQU FOR and NEXT statements, too many EQU FOR")
         for item in forstackstack:
-            print item[1]
+            print(item[1])
         sys.exit(1)
 
     printsymbols = {}
@@ -1915,11 +1922,11 @@ for inputfile in file_args:
                 printsymbols[symbolcase[sym]] = symboltable[sym]
 
     if printsymbols != {}:
-        print printsymbols
+        print(printsymbols)
 
     if exportfile:
         f = open(exportfile,'w')
-        p = cPickle.Pickler(f)
+        p = pickle.Pickler(f)
         p.dump(symboltable)
 
     if mapfile:
@@ -1940,4 +1947,4 @@ for inputfile in file_args:
 if outputfile != '':
     save_disk_image(image, outputfile)
 
-print "Finished"
+print("Finished")
