@@ -941,6 +941,10 @@ def op_FOR(p,opargs):
             symboltable['for'] = iterate
         bytes += assemble_instruction(p,args[1].strip())
     
+    del symboltable['FOR']
+    if CASE:
+        del symboltable['for']
+
     return bytes
 
 def op_noargs_type(p,opargs,instr):
