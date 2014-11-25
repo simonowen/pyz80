@@ -879,7 +879,7 @@ def op_DEFW(p,opargs):
 def op_DM(p,opargs):
     return op_DEFM(p,opargs)
 def op_DEFM(p,opargs):
-    if opargs.strip()=="44":
+    if opargs.strip()=="44" or opargs=="(44)":
         message = ','
     else:
         match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
