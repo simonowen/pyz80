@@ -7,8 +7,8 @@ from __future__ import print_function
 # defs doesn't cause bytes to be written to output unless real data follows
 
 def printusage():
-    print("pyz80 by Andrew Collier, version 1.2+ 2-Feb-2009")
-    print("http://www.intensity.org.uk/samcoupe/pyz80.html")
+    print("pyz80 by Andrew Collier, modified by Simon Owen")
+    print(" https://github.com/simonowen/pyz80/")
     print("Usage:")
     print("     pyz80 (options) inputfile(s)")
     print("Options:")
