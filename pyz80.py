@@ -1731,8 +1731,8 @@ def assembler_pass(p, inputfile):
             bytes = assemble_instruction(p,opcode)
             origin = (origin + bytes) % 65536
 
-        if global_currentfile.startswith(this_currentfilename+":") and int(global_currentfile.split(':',1)[1]) != consider_linenumber:
-            consider_linenumber = int(global_currentfile.split(':')[1])
+        if global_currentfile.startswith(this_currentfilename+":") and int(global_currentfile.rsplit(':',1)[1]) != consider_linenumber:
+            consider_linenumber = int(global_currentfile.rsplit(':')[1])
 
         consider_linenumber += 1
 
