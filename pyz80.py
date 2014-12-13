@@ -948,9 +948,10 @@ def op_FOR(p,opargs):
             symboltable['for'] = iterate
         bytes += assemble_instruction(p,args[1].strip())
     
-    del symboltable['FOR']
-    if CASE:
-        del symboltable['for']
+    if limit != 0:
+        del symboltable['FOR']
+        if CASE:
+            del symboltable['for']
 
     return bytes
 
