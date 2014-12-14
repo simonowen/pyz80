@@ -886,15 +886,39 @@ def op_DEFW(p,opargs):
 def op_DM(p,opargs):
     return op_DEFM(p,opargs)
 def op_DEFM(p,opargs):
+    messagelen = 0
     if opargs.strip()=="44" or opargs=="(44)":
-        message = ','
+        dump ([44])
+        messagelen = 1
     else:
-        match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
-        message = list(match.group(1))
-    if p==2:
-        for i in message:
-            dump ([ord(i)])
-    return len(message)
+        matchstr = opargs
+        while matchstr.strip():
+            match = re.match('\s*\"(.*?)\"\s*(,?)(.*)', matchstr)
+            if not match:
+                match = re.match('\s*([^,]*)\s*(,?)(.*)', matchstr)
+                byte=(parse_expression(match.group(1), byte=1, silenterror=1))
+                if byte=='':
+                    fatal("Didn't understand DM character constant "+b)
+                elif p==2:
+                    dump([byte])
+
+                messagelen += 1            
+            else:
+                message = list(match.group(1))
+
+                if p==2:
+                    for i in message:
+                        dump ([ord(i)])
+                messagelen += len(message)
+
+            if match.group(3) and not match.group(2):
+                fatal("Didn't understand DM multiple strings "+match.group(3))
+
+            matchstr = match.group(3)
+                        
+            
+        
+    return messagelen
 
 def op_MDAT(p,opargs):
     global dumppage, dumporigin
