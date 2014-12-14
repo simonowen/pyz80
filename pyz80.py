@@ -893,9 +893,9 @@ def op_DEFM(p,opargs):
     else:
         matchstr = opargs
         while matchstr.strip():
-            match = re.match('\s*\"(.*?)\"\s*(,?)(.*)', matchstr)
+            match = re.match('\s*\"(.*)\"(\s*,)?(.*)', matchstr)
             if not match:
-                match = re.match('\s*([^,]*)\s*(,?)(.*)', matchstr)
+                match = re.match('\s*([^,]*)(\s*,)?(.*)', matchstr)
                 byte=(parse_expression(match.group(1), byte=1, silenterror=1))
                 if byte=='':
                     fatal("Didn't understand DM character constant "+b)
@@ -911,13 +911,14 @@ def op_DEFM(p,opargs):
                         dump ([ord(i)])
                 messagelen += len(message)
 
-            if match.group(3) and not match.group(2):
-                fatal("Didn't understand DM multiple strings "+match.group(3))
-
             matchstr = match.group(3)
-                        
-            
-        
+
+            if match.group(3) and not match.group(2):
+                matchstr = '""' + matchstr
+                # For cases such as  DEFM "message with a "" in it"
+                # I can only apologise for this, this is an artefact of my parsing quotes
+                # badly at the top level but it's too much for me to go back and refactor it all.
+                # Of course, it would have helped if Comet had had sane quoting rules in the first place.
     return messagelen
 
 def op_MDAT(p,opargs):
