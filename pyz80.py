@@ -886,15 +886,40 @@ def op_DEFW(p,opargs):
 def op_DM(p,opargs):
     return op_DEFM(p,opargs)
 def op_DEFM(p,opargs):
+    messagelen = 0
     if opargs.strip()=="44" or opargs=="(44)":
-        message = ','
+        dump ([44])
+        messagelen = 1
     else:
-        match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
-        message = list(match.group(1))
-    if p==2:
-        for i in message:
-            dump ([ord(i)])
-    return len(message)
+        matchstr = opargs
+        while matchstr.strip():
+            match = re.match('\s*\"(.*)\"(\s*,)?(.*)', matchstr)
+            if not match:
+                match = re.match('\s*([^,]*)(\s*,)?(.*)', matchstr)
+                byte=(parse_expression(match.group(1), byte=1, silenterror=1))
+                if byte=='':
+                    fatal("Didn't understand DM character constant "+b)
+                elif p==2:
+                    dump([byte])
+
+                messagelen += 1            
+            else:
+                message = list(match.group(1))
+
+                if p==2:
+                    for i in message:
+                        dump ([ord(i)])
+                messagelen += len(message)
+
+            matchstr = match.group(3)
+
+            if match.group(3) and not match.group(2):
+                matchstr = '""' + matchstr
+                # For cases such as  DEFM "message with a "" in it"
+                # I can only apologise for this, this is an artefact of my parsing quotes
+                # badly at the top level but it's too much for me to go back and refactor it all.
+                # Of course, it would have helped if Comet had had sane quoting rules in the first place.
+    return messagelen
 
 def op_MDAT(p,opargs):
     global dumppage, dumporigin
@@ -948,9 +973,10 @@ def op_FOR(p,opargs):
             symboltable['for'] = iterate
         bytes += assemble_instruction(p,args[1].strip())
     
-    del symboltable['FOR']
-    if CASE:
-        del symboltable['for']
+    if limit != 0:
+        del symboltable['FOR']
+        if CASE:
+            del symboltable['for']
 
     return bytes
 
@@ -1730,8 +1756,8 @@ def assembler_pass(p, inputfile):
             bytes = assemble_instruction(p,opcode)
             origin = (origin + bytes) % 65536
 
-        if global_currentfile.startswith(this_currentfilename+":") and int(global_currentfile.split(':',1)[1]) != consider_linenumber:
-            consider_linenumber = int(global_currentfile.split(':')[1])
+        if global_currentfile.startswith(this_currentfilename+":") and int(global_currentfile.rsplit(':',1)[1]) != consider_linenumber:
+            consider_linenumber = int(global_currentfile.rsplit(':')[1])
 
         consider_linenumber += 1
 
