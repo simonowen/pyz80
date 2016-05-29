@@ -77,7 +77,7 @@ def new_disk_image():
     image = array.array('B')
     image.append(0)
     targetsize = 80*10*2*512
-    # disk image is arranged as: tr 0 s 1-10, tr 128 s 1-10, tr 1 s 1-10, tr 128 s 1-10 etc
+    # disk image is arranged as: tr 0 s 1-10, tr 128 s 1-10, tr 1 s 1-10, tr 129 s 1-10 etc
     
     while len(image) < targetsize:
         image.extend(image)
@@ -195,7 +195,10 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
         imagepos = dsk_at(track,side,sector)
         unadjustedimagepos = imagepos
         if start_of_file:
-            copylen = 501
+            if filelength > 500:
+                copylen = 501
+            else:
+                copylen = filelength
             imagepos += 9
             start_of_file = False
         else:
