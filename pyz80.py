@@ -110,7 +110,7 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
 
     #find an unused directory entry
     for direntry in range(80):
-        dirpos = dsk_at(direntry/20,0,1+(direntry%20)/2) + 256*(direntry%2)
+        dirpos = dsk_at(direntry//20,0,1+(direntry%20)//2) + 256*(direntry%2)
         if image[dirpos] == 0:
             break;
         else:
@@ -124,12 +124,12 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
     for i in range(10):
         image[dirpos+1+i]  = ord((filename+"          ")[i])
 
-    nsectors = 1 + (filelength+9)/510
-    image[dirpos+11] = nsectors / 256 # MSB number of sectors used
+    nsectors = 1 + (filelength+9)//510
+    image[dirpos+11] = nsectors // 256 # MSB number of sectors used
     image[dirpos+12] = nsectors % 256 # LSB number of sectors used
     
-    starting_side =  (4 + sectors_already_used/10)/80
-    starting_track = (4 + sectors_already_used/10)%80
+    starting_side =  (4 + sectors_already_used//10)//80
+    starting_track = (4 + sectors_already_used//10)%80
     starting_sector = sectors_already_used%10 + 1
     
     image[dirpos+13] = starting_track + 128*starting_side # starting track
@@ -139,7 +139,7 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
  
     # write table of used sectors (can precalculate from number of used bits)
     while nsectors > 0:
-        image[dirpos+15 + sectors_already_used/8] |= (1 << (sectors_already_used & 7))
+        image[dirpos+15 + sectors_already_used//8] |= (1 << (sectors_already_used & 7))
         sectors_already_used += 1
         nsectors -= 1
     
@@ -152,16 +152,16 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
     
     image[dirpos+236] = codestartpage # start page number
     image[dirpos+237] = (codestartoffset%256) # page offset (in section C, 0x8000 - 0xbfff)
-    image[dirpos+238] = 128 + (codestartoffset / 256)
+    image[dirpos+238] = 128 + (codestartoffset // 256)
     
-    image[dirpos+239] = filelength/16384 # pages in length
+    image[dirpos+239] = filelength//16384 # pages in length
     image[dirpos+240] = filelength%256 # file length % 16384
-    image[dirpos+241] = (filelength%16384)/256
+    image[dirpos+241] = (filelength%16384)//256
     
     if (execpage>0) :
         image[dirpos+242] = execpage # execution address or 255 255 255 (basicpage, L, H - offset in page C)
         image[dirpos+243] = execoffset % 256;
-        image[dirpos+244] = (execoffset%16384)/256 + 128
+        image[dirpos+244] = (execoffset%16384)//256 + 128
     else:
         image[dirpos+242] = 255 # execution address or 255 255 255 (basicpage, L, H - offset in page C)
         image[dirpos+243] = 255
@@ -180,13 +180,13 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
     image[imagepos + 0] = 19
 # 1-2     Modulo length           Length of file % 16384
     image[imagepos + 1] = filelength%256
-    image[imagepos + 2] = (filelength%16384)/256
+    image[imagepos + 2] = (filelength%16384)//256
 # 3-4     Offset start            Start address
     image[imagepos + 3] = (codestartoffset%256)
-    image[imagepos + 4] = 128 + (codestartoffset / 256)
+    image[imagepos + 4] = 128 + (codestartoffset // 256)
 # 5-6     Unused
 # 7       Number of pages
-    image[imagepos + 7] = filelength/16384
+    image[imagepos + 7] = filelength//16384
 # 8       Starting page number
     image[imagepos + 8] = codestartpage
 
@@ -210,12 +210,12 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
         if fromfile != None:
             image[imagepos:imagepos+copylen] = fromfile[fpos:fpos+copylen]
         else:
-            if ((fpos+firstpageoffset)/16384) == (((fpos+codestartoffset)+copylen-1)/16384):
-                if memory[codestartpage+(fpos+codestartoffset)/16384] != '':
-                    image[imagepos:imagepos+copylen] = memory[codestartpage+(fpos+firstpageoffset)/16384][(fpos+codestartoffset)%16384 : (fpos+codestartoffset)%16384+copylen]
+            if ((fpos+firstpageoffset)//16384) == (((fpos+codestartoffset)+copylen-1)//16384):
+                if memory[codestartpage+(fpos+codestartoffset)//16384] != '':
+                    image[imagepos:imagepos+copylen] = memory[codestartpage+(fpos+firstpageoffset)//16384][(fpos+codestartoffset)%16384 : (fpos+codestartoffset)%16384+copylen]
             else:
                 copylen1 = 16384 - ((fpos+codestartoffset)%16384)
-                page1 = (codestartpage+(fpos+codestartoffset)/16384)
+                page1 = (codestartpage+(fpos+codestartoffset)//16384)
                 if memory[page1] != '':
                     image[imagepos:imagepos+copylen1] = memory[page1][(fpos+codestartoffset)%16384 : ((fpos+codestartoffset)%16384)+copylen1]
                 if (page1 < 31) and memory[page1+1] != '':
@@ -360,7 +360,7 @@ def get_symbol(sym):
     sym = symorig if CASE else symorig.upper()
  
     if sym[0]=='@':
-        if symboltable.has_key(sym + '@' + file_and_stack()):
+        if (sym + '@' + file_and_stack()) in symboltable:
             return symboltable[sym + '@' + file_and_stack()]
         else:
             if len(sym) > 1 and (sym[1]=='-' or sym[1]=='+'):
@@ -415,7 +415,7 @@ def get_symbol(sym):
             
     
     
-    if symboltable.has_key(sym):
+    if sym in symboltable:
         symusetable[sym] = symusetable.get(sym,0)+1
         return symboltable[sym]
 
@@ -591,33 +591,33 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
 def double(arg, allow_af_instead_of_sp=0, allow_af_alt=0, allow_index=1):
 # decode double register [bc, de, hl, sp][ix,iy] --special:  af af'
     double_mapping = {'BC':([],0), 'DE':([],1), 'HL':([],2), 'SP':([],3), 'IX':([0xdd],2), 'IY':([0xfd],2), 'AF':([],5), "AF'":([],4) }
-    rr = double_mapping.get(arg.strip().upper(),([],''))
+    rr = double_mapping.get(arg.strip().upper(),([],-1))
     if (rr[1]==3) and allow_af_instead_of_sp:
-        rr = ([],'')
+        rr = ([],-1)
     if rr[1]==5:
         if allow_af_instead_of_sp:
             rr = ([],3)
         else:
-            rr = ([],'')
+            rr = ([],-1)
     if (rr[1]==4) and not allow_af_alt:
-        rr = ([],'')
+        rr = ([],-1)
     
     if (rr[0] != []) and not allow_index:
-        rr = ([],'')
+        rr = ([],-1)
     
     return rr
 
 def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=1):
 #decode single register [b,c,d,e,h,l,(hl),a][(ix {+c}),(iy {+c})]
     single_mapping = {'B':0, 'C':1, 'D':2, 'E':3, 'H':4, 'L':5, 'A':7, 'I':8, 'R':9, 'IXH':10, 'IXL':11, 'IYH':12, 'IYL':13 }
-    m = single_mapping.get(arg.strip().upper(),'')
+    m = single_mapping.get(arg.strip().upper(),-1)
     prefix=[]
     postfix=[]
     
     if m==8 and not allow_i:
-        m = ''
+        m = -1
     if m==9 and not allow_r:
-        m = ''
+        m = -1
  
     if allow_half:
         if m==10:
@@ -634,12 +634,12 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=
             m = 5
     else:
         if m >= 10 and m <= 13:
-            m = '' 
+            m = -1
     
-    if m=='' and re.search("\A\s*\(\s*HL\s*\)\s*\Z", arg, re.IGNORECASE):
+    if m==-1 and re.search("\A\s*\(\s*HL\s*\)\s*\Z", arg, re.IGNORECASE):
         m = 6
     
-    if m=='' and allow_index:
+    if m==-1 and allow_index:
         match = re.search("\A\s*\(\s*IX\s*\)\s*\Z", arg, re.IGNORECASE)
         if match:
             m = 6
@@ -656,7 +656,7 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=
                 else:
                     postfix = [0]
 
-    if m=='' and allow_index:
+    if m==-1 and allow_index:
         match = re.search("\A\s*\(\s*IY\s*\)\s*\Z", arg, re.IGNORECASE)
         if match:
             m = 6
@@ -678,7 +678,7 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=
 def condition(arg):
 # decode condition [nz, z, nc, c, po, pe, p, m]
     condition_mapping = {'NZ':0, 'Z':1, 'NC':2, 'C':3, 'PO':4, 'PE':5, 'P':6, 'M':7 }
-    return condition_mapping.get(arg.upper(),'')
+    return condition_mapping.get(arg.upper(),-1)
 
 
 def dump(bytes):
@@ -694,7 +694,7 @@ def dump(bytes):
     if (p==2):
         if dumpspace_pending > 0:
             dumporigin += dumpspace_pending
-            dumppage += dumporigin / 16384
+            dumppage += dumporigin // 16384
             dumporigin %= 16384
             dumpspace_pending = 0
         
@@ -739,13 +739,13 @@ def op_DUMP(p,opargs):
     if ',' in opargs:
         page,offset = opargs.split(',',1)
         offset = parse_expression(offset, word=1)
-        dumppage = parse_expression(page) + (offset / 16384)
+        dumppage = parse_expression(page) + (offset//16384)
         dumporigin = offset % 16384
     else:
         offset = parse_expression(opargs)
         if (offset<16384):
             error ("DUMP value out of range")
-        dumppage = (offset / 16384) - 1
+        dumppage = (offset//16384) - 1
         dumporigin = offset % 16384
     
     if ((dumppage*16384 + dumporigin) < (firstpage*16384 + firstpageoffset)):
@@ -883,7 +883,7 @@ def op_DEFW(p,opargs):
     if (p==2):
         for b in s:
             b=(parse_expression(b, word=1))
-            dump([b%256, b/256])
+            dump([b%256, b//256])
     return 2*len(s)
 
 def op_DM(p,opargs):
@@ -938,7 +938,7 @@ def op_MDAT(p,opargs):
     filelength = mdatfile.tell()
     if p==1:
         dumporigin += filelength
-        dumppage += dumporigin / 16384
+        dumppage += dumporigin // 16384
         dumporigin %= 16384
     elif p==2:
         mdatfile.seek(0)
@@ -1073,7 +1073,7 @@ def op_cbshifts_type(p,opargs,offset,step_per_register=1):
         # compound instruction of the form RLC B,(IX+c)
         pre1,r1,post1 = single(args[0], allow_half=0, allow_index=0)
         pre2,r2,post2 = single(args[1], allow_half=0, allow_index=1)
-        if r1=='' or r2=='':
+        if r1==-1 or r2==-1:
             fatal("Registers not recognized for compound instruction")
         if r1==6:
             fatal("(HL) not allowed as target of compound instruction")
@@ -1091,7 +1091,7 @@ def op_cbshifts_type(p,opargs,offset,step_per_register=1):
         instr = pre
         instr.extend([0xcb])
         instr.extend(post)
-        if r=='':
+        if r==-1:
             fatal ("Invalid argument")
         else:
             instr.append(offset + step_per_register*r)
@@ -1127,7 +1127,7 @@ def op_register_arg_type(p,opargs,offset,ninstr,step_per_register=1):
     check_args(opargs,1)
     pre,r,post = single(opargs,allow_half=1)
     instr = pre
-    if r=='':
+    if r==-1:
         match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", opargs)
         if match:
             fatal ("Illegal indirection")
@@ -1160,9 +1160,9 @@ def op_registerorpair_arg_type(p,opargs,rinstr,rrinstr,step_per_register=8,step_
     check_args(opargs,1)
     pre,r,post = single(opargs)
     
-    if r=='':
+    if r==-1:
         pre,rr = double(opargs)
-        if rr=='':
+        if rr==-1:
             fatal ("Invalid argument")
         
         instr = pre
@@ -1186,7 +1186,7 @@ def op_DEC(p,opargs):
 
 def op_add_type(p,opargs,rinstr,ninstr,rrinstr,step_per_register=1,step_per_pair=16):
     args = opargs.split(',',1)
-    r=''
+    r=-1
     
     if len(args) == 2:
         pre,r,post = single(args[0])
@@ -1194,7 +1194,7 @@ def op_add_type(p,opargs,rinstr,ninstr,rrinstr,step_per_register=1,step_per_pair
     if (len(args) == 1) or r==7:
         pre,r,post = single(args[-1])
         instr = pre
-        if r=='':
+        if r==-1:
             match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[-1])
             if match:
                 fatal ("Illegal indirection")
@@ -1264,7 +1264,7 @@ def op_pushpop_type(p,opargs,offset):
     check_args(opargs,1)
     prefix, rr = double(opargs, allow_af_instead_of_sp=1)
     instr = prefix
-    if rr=='':
+    if rr==-1:
         fatal ("Invalid argument")
     else:
         instr.append(offset + 16 * rr)
@@ -1283,7 +1283,7 @@ def op_jumpcall_type(p,opargs,offset, condoffset):
         instr = [offset]
     else:
         cond = condition(args[0])
-        if cond == '':
+        if cond == -1:
             fatal ("Expected condition, received "+opargs)
         instr = [condoffset + 8*cond]
 
@@ -1293,7 +1293,7 @@ def op_jumpcall_type(p,opargs,offset, condoffset):
     
     if (p==2):
         nn = parse_expression(args[-1],word=1)
-        instr.extend([nn%256, nn/256])
+        instr.extend([nn%256, nn//256])
         dump(instr)
     
     return 3
@@ -1329,7 +1329,7 @@ def op_JR(p,opargs):
         instr = 0x18
     else:
         cond = condition(args[0])
-        if cond == '':
+        if cond == -1:
             fatal ("Expected condition, received "+opargs)
         elif cond >= 4:
             fatal ("Invalid condition for JR")
@@ -1350,7 +1350,7 @@ def op_RET(p,opargs):
     else:
         check_args(opargs,1)
         cond = condition(opargs)
-        if cond == '':
+        if cond == -1:
             fatal ("Expected condition, received "+opargs)
         if (p==2):
             dump([0xc0 + 8*cond])
@@ -1414,7 +1414,7 @@ def op_IN(p,opargs):
     args = opargs.split(',',1)
     if (p==2):
         pre,r,post = single(args[0],allow_index=0,allow_half=0)
-        if r!='' and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[1], re.IGNORECASE):
+        if r!=-1 and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[1], re.IGNORECASE):
             dump([0xed, 0x40+8*r])
         elif r==7:
             match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[1])
@@ -1432,7 +1432,7 @@ def op_OUT(p,opargs):
     args = opargs.split(',',1)
     if (p==2):
         pre,r,post = single(args[1],allow_index=0,allow_half=0)
-        if r!='' and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[0], re.IGNORECASE):
+        if r!=-1 and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[0], re.IGNORECASE):
             dump([0xed, 0x41+8*r])
         elif r==7:
             match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[0])
@@ -1447,7 +1447,7 @@ def op_LD(p,opargs):
     arg1,arg2 = opargs.split(',',1)
     
     prefix, rr1 = double(arg1)
-    if rr1 != '':
+    if rr1 != -1:
         prefix2, rr2 = double(arg2)
         if rr1==3 and rr2==2:
             instr = prefix2
@@ -1464,9 +1464,9 @@ def op_LD(p,opargs):
                 nn = 0
             instr = prefix
             if rr1==2:
-                instr.extend([0x2a, nn%256, nn/256])
+                instr.extend([0x2a, nn%256, nn//256])
             else:
-                instr.extend([0xed, 0x4b + 16*rr1, nn%256, nn/256])
+                instr.extend([0xed, 0x4b + 16*rr1, nn%256, nn//256])
             dump(instr)
             return len (instr)
         else:
@@ -1476,12 +1476,12 @@ def op_LD(p,opargs):
             else:
                 nn = 0
             instr = prefix
-            instr.extend([0x01 + 16*rr1, nn%256, nn/256])
+            instr.extend([0x01 + 16*rr1, nn%256, nn//256])
             dump(instr)
             return len (instr)
     
     prefix, rr2 = double(arg2)
-    if rr2 != '':
+    if rr2 != -1:
         match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", arg1)
         if match:
             # ld (nn), rr
@@ -1491,16 +1491,16 @@ def op_LD(p,opargs):
                 nn = 0
             instr = prefix
             if rr2==2:
-                instr.extend([0x22, nn%256, nn/256])
+                instr.extend([0x22, nn%256, nn//256])
             else:
-                instr.extend([0xed, 0x43 + 16*rr2, nn%256, nn/256])
+                instr.extend([0xed, 0x43 + 16*rr2, nn%256, nn//256])
             dump(instr)
             return len (instr)
     
     prefix1,r1,postfix1 = single(arg1, allow_i=1, allow_r=1)
     prefix2,r2,postfix2 = single(arg2, allow_i=1, allow_r=1)
-    if r1 != '' :
-        if r2 != '':
+    if r1 != -1 :
+        if r2 != -1:
             if (r1 > 7) or (r2 > 7):
                 if r1==7:
                     if r2==8:
@@ -1555,7 +1555,7 @@ def op_LD(p,opargs):
                     fatal("Illegal indirection")
                 if p==2:
                     nn = parse_expression(match.group(1), word=1)
-                    dump([0x3a, nn%256, nn/256])
+                    dump([0x3a, nn%256, nn//256])
                 return 3
             
             instr = prefix1
@@ -1581,7 +1581,7 @@ def op_LD(p,opargs):
         if match:
             if p==2:
                 nn = parse_expression(match.group(1), word=1)
-                dump([0x32, nn%256, nn/256])
+                dump([0x32, nn%256, nn//256])
             return 3
     fatal("LD args not understood - "+arg1+", "+arg2)
     
@@ -1898,7 +1898,7 @@ for inputfile in file_args:
         picklefile = open(picklefilename)
         u = pickle.Unpickler(picklefile)
         ImportSymbols = u.load()
-        for sym,val in ImportSymbols.items():
+        for sym,val in list(ImportSymbols.items()):
             if not CASE:
                 symboltable[sym.upper()]=val
             else:
@@ -1960,8 +1960,8 @@ for inputfile in file_args:
 
     if mapfile:
         addrmap = {}
-        for sym,count in sorted(symusetable.items(), key=lambda x: x[1]):
-            if labeltable.has_key(sym):
+        for sym,count in sorted(list(symusetable.items()), key=lambda x: x[1]):
+            if sym in labeltable:
                 addrmap[labeltable[sym]] = symbolcase[sym]
 
         with open(mapfile,'w') as f:
