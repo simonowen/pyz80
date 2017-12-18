@@ -314,12 +314,12 @@ def save_memory_to_file(filename, firstusedpage, firstpageoffset, filelength):
     objfile.close()
 
 def warning(message):
-    print('Warning:', message)
-    print(global_currentfile,'"'+global_currentline.strip()+'"')
+    print(global_currentfile, 'warning:', message)
+    print('\t', global_currentline.strip())
 
 def fatal(message):
-    print('Error:', message)
-    print(global_currentfile,'"'+global_currentline.strip()+'"')
+    print(global_currentfile, 'error:', message)
+    print ('\t', global_currentline.strip())
     sys.exit(1)
 
 def expand_symbol(sym):
@@ -1683,6 +1683,7 @@ def assembler_pass(p, inputfile):
     try:
         currentfile = open(this_currentfilename,'r')
         wholefile=currentfile.readlines()
+        wholefile.insert(0, '') # prepend blank so line numbers are 1-based
         currentfile.close()
     except:
         fatal("Couldn't open file "+this_currentfilename+" for reading")
