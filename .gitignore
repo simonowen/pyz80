@@ -1,0 +1,4 @@
+*-release/
+*.tgz
+*.dsk
+*.dsk.gz

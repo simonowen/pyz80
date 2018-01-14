@@ -927,7 +927,7 @@ def op_DEFM(p,opargs):
 def op_MDAT(p,opargs):
     global dumppage, dumporigin
     match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
-    filename = global_path + match.group(1)
+    filename = os.path.join(global_path, match.group(1))
     
     try:
         mdatfile = open(filename,'rb')
@@ -1676,9 +1676,9 @@ def assembler_pass(p, inputfile):
     # I'd prefer not to, but assembler_pass can be called recursively
     # (by op_INCLUDE for example) and fileinput does not support two files simultaneously
     
-    this_currentfilename = global_path + inputfile
-    if "/" in this_currentfilename:
-        global_path = this_currentfilename[:this_currentfilename.rfind('/')+1]
+    this_currentfilename = os.path.join(global_path, inputfile)
+    if os.sep in this_currentfilename:
+        global_path = os.path.dirname(this_currentfilename)
     
     try:
         currentfile = open(this_currentfilename,'r')
@@ -1769,6 +1769,7 @@ def assembler_pass(p, inputfile):
 
 try:
     option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','obj=','case','nobodmas','exportfile=','importfile=','mapfile='])
+    file_args = [os.path.normpath(x) for x in file_args]
 except getopt.GetoptError:
     printusage()
     sys.exit(2)
@@ -1856,7 +1857,7 @@ if (objectfile != '') and (len(file_args) != 1):
     sys.exit(2)
 
 if (outputfile == '') and (objectfile == ''):
-    outputfile = file_args[0].split('/')[-1].split('.')[0] + ".dsk";
+    outputfile = os.path.splitext(file_args[0])[0] + ".dsk";
 
 image = new_disk_image()
 
