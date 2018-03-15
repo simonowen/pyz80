@@ -691,7 +691,7 @@ def dump(bytes):
         while len(memory[page]) < 16384:
             memory[page].extend(memory[page])
     
-    global dumppage, dumporigin, dumpspace_pending,lstcode
+    global dumppage, dumporigin, dumpspace_pending, lstcode, listingfile
     
     if (p==2):
         if dumpspace_pending > 0:
@@ -707,7 +707,8 @@ def dump(bytes):
            # if b<0 or b>255:
            #     warning("Dump byte out of range")
             memory[dumppage][dumporigin] = b
-            lstcode=lstcode+"%02X "%(b)
+            if listingfile != None:
+              lstcode=lstcode+"%02X "%(b)
             dumporigin += 1
             if dumporigin == 16384:
                 dumporigin = 0
@@ -1666,7 +1667,7 @@ def assemble_instruction(p, line):
 
 def assembler_pass(p, inputfile):
     global memory, symboltable, symusetable, labeltable, origin, dumppage, dumporigin, symbol
-    global global_currentfile, global_currentline
+    global global_currentfile, global_currentline, lstcode, listingfile
 # file references are local, so assembler_pass can be called recursively (for op_INC)
 # but copied to a global identifier for warning printouts
     global global_path
@@ -1760,14 +1761,14 @@ def assembler_pass(p, inputfile):
         
         if (opcode):
             bytes = assemble_instruction(p,opcode)
-            if p>1:
+            if p>1 and listingfile != None:
               lstout="%04X %-13s\t%s"%(origin,lstcode,wholefile[consider_linenumber].rstrip())
               lstcode=""
               writelisting(lstout)
             origin = (origin + bytes) % 65536
         else:
-          if p>1:
-            lstout="    %-13s\t%s"%("",wholefile[consider_linenumber].strip())
+          if p>1 and listingfile != None:
+            lstout="    %-13s\t%s"%("",wholefile[consider_linenumber].rstrip())
             lstcode=""
             writelisting(lstout)
 
