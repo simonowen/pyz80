@@ -31,6 +31,8 @@ def printusage():
     print("   Define symbols before assembly, from a file previously exported")
     print("--mapfile=filename")
     print("   Save address-to-symbol map into the given file")
+    print("--lstfile=filename")
+    print("   Produce assembly listing into given file")
     print("--case")
     print("   treat source labels as case sensitive (as COMET itself did)")
     print("--nobodmas")
@@ -689,7 +691,7 @@ def dump(bytes):
         while len(memory[page]) < 16384:
             memory[page].extend(memory[page])
     
-    global dumppage, dumporigin, dumpspace_pending
+    global dumppage, dumporigin, dumpspace_pending,lstcode
     
     if (p==2):
         if dumpspace_pending > 0:
@@ -700,12 +702,12 @@ def dump(bytes):
         
         if memory[dumppage]=='':
             initpage(dumppage)
-        
+        lstcode = ""
         for b in bytes:
            # if b<0 or b>255:
            #     warning("Dump byte out of range")
             memory[dumppage][dumporigin] = b
-            
+            lstcode=lstcode+"%02X "%(b)
             dumporigin += 1
             if dumporigin == 16384:
                 dumporigin = 0
@@ -1758,7 +1760,16 @@ def assembler_pass(p, inputfile):
         
         if (opcode):
             bytes = assemble_instruction(p,opcode)
+            if p>1:
+              lstout="%04X %-13s\t%s"%(origin,lstcode,wholefile[consider_linenumber].rstrip())
+              lstcode=""
+              writelisting(lstout)
             origin = (origin + bytes) % 65536
+        else:
+          if p>1:
+            lstout="    %-13s\t%s"%("",wholefile[consider_linenumber].strip())
+            lstcode=""
+            writelisting(lstout)
 
         if global_currentfile.startswith(this_currentfilename+":") and int(global_currentfile.rsplit(':',1)[1]) != consider_linenumber:
             consider_linenumber = int(global_currentfile.rsplit(':')[1])
@@ -1768,7 +1779,7 @@ def assembler_pass(p, inputfile):
 ###########################################################################
 
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','obj=','case','nobodmas','exportfile=','importfile=','mapfile='])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','obj=','case','nobodmas','exportfile=','importfile=','mapfile=','lstfile='])
     file_args = [os.path.normpath(x) for x in file_args]
 except getopt.GetoptError:
     printusage()
@@ -1783,12 +1794,18 @@ ZIP = True
 CASE = False
 NOBODMAS = False
 
+lstcode=""
 listsymbols=[]
 predefsymbols=[]
 includefiles=[]
 importfiles=[]
 exportfile = None
 mapfile = None
+listingfile = None
+
+def writelisting(line):
+  if listingfile != None:
+    listingfile.write(line+"\n")
 
 for option,value in option_args:
     if option in ['--version']:
@@ -1837,6 +1854,14 @@ for option,value in option_args:
             mapfile = value
         else:
             print("Map file specified twice")
+            printusage()
+            sys.exit(2)
+
+    if option in ['--lstfile']:
+        if listingfile == None:
+            listingfile=open(value,"wt")
+        else:
+            print("List file specified twice")
             printusage()
             sys.exit(2)
 
