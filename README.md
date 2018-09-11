@@ -276,14 +276,14 @@ Prints the result of the expressions as soon as they are evaluated during assemb
 
 Wherever an instruction or directive requires a number, a mathematical expression can be used instead. These are allowed to contain any symbol names defined in the file. If the result of an expression is negative, it will appear in the instruction in two's complement.
 
-$   a symbol representing the address of the current instruction
-&   prefixes a hexadecimal number
-0x  prefixes a hexadecimal number
-%   prefixes a binary number
-0b  prefixes a binary number
-"   a single character enclosed in double-quotes can be used to represent the ascii value of that character
-""  strings are delimited by the double-quote character. To encode a literal double-quote within a string, use the double-quote character twice.
-\   mod
+`$`   a symbol representing the address of the current instruction  
+`&`   prefixes a hexadecimal number  
+`0x`  prefixes a hexadecimal number  
+`%`   prefixes a binary number  
+`0b`  prefixes a binary number  
+`"`   a single character enclosed in double-quotes can be used to represent the ascii value of that character  
+`""`  strings are delimited by the double-quote character. To encode a literal double-quote within a string, use the double-quote character twice.  
+`\`   mod
 
 Several mathematical functions are available within expressions. You may use any method of the random or math python modules; a few examples are listed below:
 
