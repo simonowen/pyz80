@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="pyz80">
+
+	<property name="python" location="d:/sam/python36/python.exe" />
+
+	<target name="test-valid">
+
+		<exec executable="${python}" failonerror="true">
+			<arg value="../pyz80.py" />
+			<arg value="--obj=_test_.bin" />
+			<arg value="valid.z80s" />
+		</exec>
+
+		<fail message="assembled output does not match reference output">
+			<condition>
+				<not>
+					<filesmatch file1="_test_.bin" file2="valid.bin" />
+				</not>
+			</condition>
+		</fail>
+		
+		<delete file="_test_.bin"/>
+
+	</target>
+
+	<target name="test-invalid">
+
+		<exec executable="${python}" failonerror="true">
+			<arg value="../pyz80.py" />
+			<arg value="-e" />
+			<arg value="invalid.z80s" />
+		</exec>
+
+	</target>
+
+</project>

@@ -1,0 +1,10 @@
+language: java
+
+python:
+ 
+  - "3.7"
+  
+script:
+
+  - cd testing
+  - ant test-valid -Dpython=python
