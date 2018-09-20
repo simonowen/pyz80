@@ -1,6 +1,8 @@
 # pyz80 - a Z80 cross assembler
 Unofficial branch of http://sourceforge.net/projects/pyz80/ for fixes and enhancements.
 
+[![Build Status](https://travis-ci.org/stefandrissen/pyz80.svg?branch=master)](https://travis-ci.org/stefandrissen/pyz80)
+
 **pyz80 - a Z80 cross assembler**
 
 Version 1.21, released 11 July 2013
