@@ -26,9 +26,7 @@
 	<target name="test-invalid">
 
 		<exec executable="${python}" failonerror="true">
-			<arg value="../pyz80.py" />
-			<arg value="-e" />
-			<arg value="invalid.z80s" />
+			<arg value="test_invalid.py" />
 		</exec>
 
 	</target>
