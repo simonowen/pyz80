@@ -7,17 +7,19 @@ import binascii
 exitcode = 0
 equ = '\n'.join( [ "nn: equ &1122", "n: equ &33", "o: equ &44", "", "" ] )
 
+FNULL = open( os.devnull, "w" )
+
 file = open( "invalid.z80s", "r" )
 for line in file:
 
 	if line.strip() and not re.match( ".*;.*", line ):
 			
-		print( "assembling", line )
+		# print( "assembling", line )
 		asm = open( "_test_.asm", "w" )
 		asm.write( equ )
 		asm.write( line )
 		asm.close()
-		subprocess.call( [ "python", "../pyz80.py", "--obj=_test_.bin", "_test_.asm" ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL )
+		subprocess.call( [ "python", "../pyz80.py", "--obj=_test_.bin", "_test_.asm" ], stdout=FNULL, stderr=subprocess.STDOUT )
 		
 		if os.path.isfile( "_test_.bin" ):
 		
