@@ -61,8 +61,10 @@ This option allows you to save the generated code as a raw binary file, instead 
 
 You may only assemble a single input Z80 source file if you use this option.
 
-`-D symbol`
-`-D symbol=value`
+```
+-D symbol
+-D symbol=value
+```
 
 This option defines a symbol before beginning to assemble the source file. The value of the symbol will be available to all expressions, both within instructions and also in assembler directives.
 
@@ -183,8 +185,10 @@ ld a, defined(DEBUG)
 
 Specify the origin of the code, i.e. the address from which it is intended to be run. This can be anywhere in the address range of the Z80, that is, 0 to 65535.
 
-`DUMP address`
-`DUMP page, offset`
+```
+DUMP address
+DUMP page, offset
+```
 
 Specify the destination address of the code output. This directive is available in two forms. The first takes an address from 16384 to 65535, these are addresses in pages 0 to 2 as addressed in BASIC. The second form takes a page number from 0 to 31, and an offset within that page of 0 to 16383.
 
@@ -194,23 +198,31 @@ The current DUMP address will be marked as the execute address in the directory 
 
 This directive may not be used more than once during assembly.
 
-`DEFB  n [,n ...]`
-`DB    n [,n ...]`
+```
+DEFB  n [,n ...]
+DB    n [,n ...]
+```
 
 Define bytes at the current address. Either DEFB or DB are allowed and are equivalent in meaning. n can be a literal number or any expression, in the range 0 to 255 (or -128 to +127).
 
-`DEFW  n [,n ...]`
-`DW    n [,n ...]`
+```
+DEFW  n [,n ...]
+DW    n [,n ...]
+```
 
 Define words at the current address. Either DEFW or DW are allowed and are equivalent in meaning. n can be a literal number or any expression, in the range 0 to 65535 (or -32768 to +32767).
 
-`DEFM  "string"`
-`DM    "string"`
+```
+DEFM  "string"
+DM    "string"
+```
 
 Define a message at the current address. The string is always delimited by double quotes. To include a double quote in the string itself, place two double quote characters adjacent to each other.
 
-`DEFS  n`
-`DS    n`
+```
+DEFS  n
+DS    n
+```
 
 Define storage space at the current address. The current address increases by n bytes, thus leaving them available for your program's own use.
 
@@ -222,8 +234,10 @@ This ensures that the following instruction will be aligned on the boundary spec
 
 This directive merges a data file from the host filesystem into the object code at the current address. filename is enclosed in double-quotes and is expressed relatively to the file currently being assembled.
 
-`INC "filename"`
-`INCLUDE "filename"`
+```
+INC "filename"
+INCLUDE "filename"
+```
 
 This directive assembles the specified source file starting at the current address, as though the whole file were literally included in the current one. All symbols in the included file will be available globally, and must therefore be unique (unless they are local symbols).
 
@@ -235,9 +249,11 @@ Repeats a single instruction (or directive) range times.
 
 During assembly of this instruction, a symbol FOR is valid and holds the iteration number from 0 to range-1.
 
-`symbol: EQU FOR range`
-`        ...`
-`NEXT symbol`
+```
+symbol: EQU FOR range
+        ...
+NEXT symbol
+```
 
 Repeats several lines of assembly, range times. When the lines between EQU FOR and NEXT are being assembled,  the symbol symbol is valid, and holds the iteration number from 0 to range-1.
 
@@ -245,13 +261,15 @@ FOR...NEXT blocks can be nested, with each layer using a different symbol name.
 
 Where a local symbol is defined within a FOR...NEXT block, it can only be used within the same block. All references to it will target the same iteration.
 
-`IF expression`
-`        ...`
-`[ELSE IF expression]`
-`        ...`
-`[ELSE]`
-`        ...`
-`ENDIF`
+```
+IF expression
+        ...
+[ELSE IF expression]
+        ...
+[ELSE]
+        ...
+ENDIF
+```
 
 An IF block allows conditional assembly of your source based on some condition. For example, you may want to introduce some features during development of an application but to leave them out of release builds; in this case, IF blocks can be effectively used in conjunction with the -D command line option.
 
@@ -302,8 +320,10 @@ DEFB random()\*256
 
 Returns a random integer in the range start ≤ x < stop
 
-`sin(angle)`
-`cos(angle)`
+```
+sin(angle)
+cos(angle)
+```
 
 angle is specified in radians.
 
@@ -319,19 +339,19 @@ Thanks to Simon Owen and other users for their feedback during development.
 
 pyz80 web page:
 
-        [http://www.intensity.org.uk/samcoupe/pyz80.html](http://www.intensity.org.uk/samcoupe/pyz80.html)
+[http://www.intensity.org.uk/samcoupe/pyz80.html](http://www.intensity.org.uk/samcoupe/pyz80.html)
 
 SimCoupe Homepage:
 
-        [http://www.simcoupe.org/](http://www.simcoupe.org/)
+[http://www.simcoupe.org/](http://www.simcoupe.org/)
 
 World of Sam archive:
 
-        [http://www.worldofsam.org/](http://www.worldofsam.org/)
+[http://www.worldofsam.org/](http://www.worldofsam.org/)
 
 Wikipedia entry for the SAM Coupé (and for more links):
 
-        [http://wikipedia.org/wiki/Sam\_Coupe](http://wikipedia.org/wiki/Sam_Coupe)
+[http://wikipedia.org/wiki/Sam\_Coupe](http://wikipedia.org/wiki/Sam_Coupe)
 
 **Disclaimer**
 
