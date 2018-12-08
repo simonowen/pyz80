@@ -1222,7 +1222,7 @@ def op_add_type(p,opargs,rinstr,ninstr,rrinstr,step_per_register=1,step_per_pair
         if (len(rrinstr) > 1) and pre:
             fatal ("Can't use index registers in this instruction")
         
-        if (len(args) != 2) or (rr1 != 2):
+        if (len(args) != 2) or (rr1 != 2) or (rr2 == -1):
             fatal("Invalid argument")
         
         instr = pre
@@ -1247,6 +1247,8 @@ def op_bit_type(p,opargs,offset):
     if b>7 or b<0:
         fatal ("argument out of range")
     pre,r,post = single(arg2,allow_half=0)
+    if r==-1:
+    	fatal ("Invalid argument")
     instr = pre
     instr.append(0xcb)
     instr.extend(post)
