@@ -1,0 +1,13 @@
+language: python
+
+python:
+ 
+  - "2.7"
+  - "3.6"
+  
+script:
+
+  - cd testing
+  - ant test-valid -Dpython=python
+  - ant test-invalid -Dpython=python
+  
