@@ -695,6 +695,8 @@ def dump(bytes):
     
     if (p==2):
         if dumpspace_pending > 0:
+            if memory[dumppage]=='':
+                initpage(dumppage)                  
             dumporigin += dumpspace_pending
             dumppage += dumporigin // 16384
             dumporigin %= 16384
