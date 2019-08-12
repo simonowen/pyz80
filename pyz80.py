@@ -240,9 +240,11 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
             image[unadjustedimagepos+510] = track + 128*side
             image[unadjustedimagepos+511] = sector
 
+def array_bytes(arr):
+    return arr.tobytes() if hasattr(arr, "tobytes") else arr.tostring()
 
 def save_disk_image(image, pathname):
-    imagestr = image.tostring()
+    imagestr = array_bytes(image)
     if ZIP:
         dskfile = gzip.open(pathname, 'wb')
     else:
@@ -301,7 +303,7 @@ def save_memory_to_file(filename, firstusedpage, firstpageoffset, filelength):
         wlen = min(16384-offset, flen)
         
         if memory[page] != "":
-            pagestr = memory[page].tostring()
+            pagestr = array_bytes(memory[page])
             objfile.write(pagestr[offset:offset+wlen])
             
             
