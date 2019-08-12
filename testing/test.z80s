@@ -51,7 +51,7 @@ includelength: equ includeend - includestart
     for 8, db for
 
     for 4, ldi
-    for 256, db -0.5+127.5*sin((FOR/256.0)*pi*2)
+    for 256, db floor(127.5*sin((FOR/256.0)*pi*2))
 
 
     ld (iy+0),45
