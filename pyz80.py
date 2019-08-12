@@ -562,12 +562,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     #    print(argcopy,"->",argcopy2)
         argcopy = argcopy2
     
-    farg = eval(argcopy)
-    if farg >= -.5:
-        farg += 0.5
-    else:
-        farg -= 0.5
-    narg = int(farg)
+    narg = int(eval(argcopy))
 #    print(arg, " -> ",argcopy," == ",narg)
     
     if signed:
