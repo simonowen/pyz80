@@ -114,7 +114,7 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
     for direntry in range(80):
         dirpos = dsk_at(direntry//20,0,1+(direntry%20)//2) + 256*(direntry%2)
         if image[dirpos] == 0:
-            break;
+            break
         else:
             sectors_already_used += image[dirpos+11]*256 +image[dirpos+12]
             
@@ -162,7 +162,7 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
     
     if (execpage>0) :
         image[dirpos+242] = execpage # execution address or 255 255 255 (basicpage, L, H - offset in page C)
-        image[dirpos+243] = execoffset % 256;
+        image[dirpos+243] = execoffset % 256
         image[dirpos+244] = (execoffset%16384)//256 + 128
     else:
         image[dirpos+242] = 255 # execution address or 255 255 255 (basicpage, L, H - offset in page C)
@@ -326,7 +326,7 @@ def fatal(message):
 
 def expand_symbol(sym):
     while 1:
-        match = re.search('\{([^\{\}]*)\}', sym)
+        match = re.search(r'\{([^\{\}]*)\}', sym)
         if match:            
             value = parse_expression(match.group(1))
             sym = sym.replace(match.group(0),str(value))
@@ -440,7 +440,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
             break
 
     while 1:
-        match = re.search('defined\s*\(\s*(.*)\s*\)', arg, re.IGNORECASE)
+        match = re.search(r'defined\s*\(\s*(.*)\s*\)', arg, re.IGNORECASE)
         if match:
             result = (get_symbol(match.group(1)) != None)
             arg = arg.replace(match.group(0),str(int(result)))
@@ -568,20 +568,20 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     if signed:
         if byte:
             if (  -128 < narg > 127):
-                warning ("Signed byte value truncated from "+str(narg));
+                warning ("Signed byte value truncated from "+str(narg))
             narg = (narg + 128)%256 -128
         elif word:
             if (  -32768 < narg > 32767):
-                warning ("Signed word value truncated from "+str(narg));
+                warning ("Signed word value truncated from "+str(narg))
             narg = (narg + 32768)%65536 - 32768
     else:
         if byte:
             if (  0 < narg > 255):
-                warning ("Unsigned byte value truncated from "+str(narg));
+                warning ("Unsigned byte value truncated from "+str(narg))
             narg %= 256
         elif word:
             if (  0 < narg > 65535):
-                warning ("Unsigned byte value truncated from "+str(narg));
+                warning ("Unsigned byte value truncated from "+str(narg))
             narg %= 65536
     return narg
 
@@ -633,18 +633,18 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=
         if m >= 10 and m <= 13:
             m = -1
     
-    if m==-1 and re.search("\A\s*\(\s*HL\s*\)\s*\Z", arg, re.IGNORECASE):
+    if m==-1 and re.search(r"\A\s*\(\s*HL\s*\)\s*\Z", arg, re.IGNORECASE):
         m = 6
     
     if m==-1 and allow_index:
-        match = re.search("\A\s*\(\s*IX\s*\)\s*\Z", arg, re.IGNORECASE)
+        match = re.search(r"\A\s*\(\s*IX\s*\)\s*\Z", arg, re.IGNORECASE)
         if match:
             m = 6
             prefix = [0xdd]
             postfix = [0]
             
         elif allow_offset:
-            match = re.search("\A\s*\(\s*IX\s*([+-].*)\s*\)\s*\Z", arg, re.IGNORECASE)
+            match = re.search(r"\A\s*\(\s*IX\s*([+-].*)\s*\)\s*\Z", arg, re.IGNORECASE)
             if match:
                 m = 6
                 prefix = [0xdd]
@@ -654,14 +654,14 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=
                     postfix = [0]
 
     if m==-1 and allow_index:
-        match = re.search("\A\s*\(\s*IY\s*\)\s*\Z", arg, re.IGNORECASE)
+        match = re.search(r"\A\s*\(\s*IY\s*\)\s*\Z", arg, re.IGNORECASE)
         if match:
             m = 6
             prefix = [0xfd]
             postfix = [0]
 
         elif allow_offset:
-            match = re.search("\A\s*\(\s*IY\s*([+-].*)\s*\)\s*\Z", arg, re.IGNORECASE)
+            match = re.search(r"\A\s*\(\s*IY\s*([+-].*)\s*\)\s*\Z", arg, re.IGNORECASE)
             if match:
                 m = 6
                 prefix = [0xfd]
@@ -744,7 +744,7 @@ def op_DUMP(p,opargs):
     else:
         offset = parse_expression(opargs)
         if (offset<16384):
-            error ("DUMP value out of range")
+            fatal("DUMP value out of range")
         dumppage = (offset//16384) - 1
         dumporigin = offset % 16384
     
@@ -781,9 +781,9 @@ def op_AUTOEXEC(p,opargs):
     check_args(opargs,0)
     if (p==2):
         if (autoexecpage>0 or autoexecorigin>0):
-            fatal("AUTOEXEC may only be used once.");
-        autoexecpage = dumppage + 1; # basic type page numbering
-        autoexecorigin = dumporigin;
+            fatal("AUTOEXEC may only be used once.")
+        autoexecpage = dumppage + 1 # basic type page numbering
+        autoexecorigin = dumporigin
 
     
     return 0
@@ -797,7 +797,7 @@ def op_EQU(p,opargs):
             
             limit = parse_expression(opargs[4:].strip())
             if limit < 1:
-                error("FOR range < 1 not allowed")
+                fatal("FOR range < 1 not allowed")
             forstack.append( [symbol,global_currentfile,0,limit] )
 
         else:
@@ -846,7 +846,7 @@ def op_ALIGN(p,opargs):
 
     s = (align - origin%align)%align
     dumpspace_pending += s
-    return s;
+    return s
 
 def op_DS(p,opargs):
     return op_DEFS(p,opargs)
@@ -896,12 +896,12 @@ def op_DEFM(p,opargs):
     else:
         matchstr = opargs
         while matchstr.strip():
-            match = re.match('\s*\"(.*)\"(\s*,)?(.*)', matchstr)
+            match = re.match(r'\s*\"(.*)\"(\s*,)?(.*)', matchstr)
             if not match:
-                match = re.match('\s*([^,]*)(\s*,)?(.*)', matchstr)
+                match = re.match(r'\s*([^,]*)(\s*,)?(.*)', matchstr)
                 byte=(parse_expression(match.group(1), byte=1, silenterror=1))
                 if byte=='':
-                    fatal("Didn't understand DM character constant "+b)
+                    fatal("Didn't understand DM character constant "+match.group(1))
                 elif p==2:
                     dump([byte])
 
@@ -926,7 +926,7 @@ def op_DEFM(p,opargs):
 
 def op_MDAT(p,opargs):
     global dumppage, dumporigin
-    match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
+    match = re.search(r'\A\s*\"(.*)\"\s*\Z', opargs)
     filename = os.path.join(global_path, match.group(1))
     
     try:
@@ -953,9 +953,7 @@ def op_INCLUDE(p,opargs):
     global global_path, global_currentfile
     global include_stack
     
-    savedorigin = origin
-    
-    match = re.search('\A\s*\"(.*)\"\s*\Z', opargs)
+    match = re.search(r'\A\s*\"(.*)\"\s*\Z', opargs)
     filename = match.group(1)
     
     include_stack.append((global_path, global_currentfile))
@@ -1128,7 +1126,7 @@ def op_register_arg_type(p,opargs,offset,ninstr,step_per_register=1):
     pre,r,post = single(opargs,allow_half=1)
     instr = pre
     if r==-1:
-        match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", opargs)
+        match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", opargs)
         if match:
             fatal ("Illegal indirection")
 
@@ -1195,7 +1193,7 @@ def op_add_type(p,opargs,rinstr,ninstr,rrinstr,step_per_register=1,step_per_pair
         pre,r,post = single(args[-1])
         instr = pre
         if r==-1:
-            match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[-1])
+            match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", args[-1])
             if match:
                 fatal ("Illegal indirection")
 
@@ -1289,7 +1287,7 @@ def op_jumpcall_type(p,opargs,offset, condoffset):
             fatal ("Expected condition, received "+opargs)
         instr = [condoffset + 8*cond]
 
-    match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[-1])
+    match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", args[-1])
     if match:
         fatal ("Illegal indirection")
     
@@ -1384,7 +1382,7 @@ def op_EX(p,opargs):
     check_args(opargs,2)
     args = opargs.split(',',1)
     
-    if re.search("\A\s*\(\s*SP\s*\)\s*\Z", args[0], re.IGNORECASE):
+    if re.search(r"\A\s*\(\s*SP\s*\)\s*\Z", args[0], re.IGNORECASE):
         pre2,rr2 = double(args[1],allow_af_instead_of_sp=1, allow_af_alt=1, allow_index=1)
     
         if rr2==2:
@@ -1416,10 +1414,10 @@ def op_IN(p,opargs):
     args = opargs.split(',',1)
     if (p==2):
         pre,r,post = single(args[0],allow_index=0,allow_half=0)
-        if r!=-1 and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[1], re.IGNORECASE):
+        if r!=-1 and r!=6 and re.search(r"\A\s*\(\s*C\s*\)\s*\Z", args[1], re.IGNORECASE):
             dump([0xed, 0x40+8*r])
         elif r==7:
-            match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[1])
+            match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", args[1])
             if match==None:
                 fatal("No expression in "+args[1])
             
@@ -1434,10 +1432,10 @@ def op_OUT(p,opargs):
     args = opargs.split(',',1)
     if (p==2):
         pre,r,post = single(args[1],allow_index=0,allow_half=0)
-        if r!=-1 and r!=6 and re.search("\A\s*\(\s*C\s*\)\s*\Z", args[0], re.IGNORECASE):
+        if r!=-1 and r!=6 and re.search(r"\A\s*\(\s*C\s*\)\s*\Z", args[0], re.IGNORECASE):
             dump([0xed, 0x41+8*r])
         elif r==7:
-            match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", args[0])
+            match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", args[0])
             n = parse_expression(match.group(1))
             dump([0xd3, n])
         else:
@@ -1457,7 +1455,7 @@ def op_LD(p,opargs):
             dump(instr)
             return len(instr)
         
-        match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", arg2)
+        match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", arg2)
         if match:
             # ld rr, (nn)
             if p==2:
@@ -1484,7 +1482,7 @@ def op_LD(p,opargs):
     
     prefix, rr2 = double(arg2)
     if rr2 != -1:
-        match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", arg1)
+        match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", arg1)
         if match:
             # ld (nn), rr
             if p==2:
@@ -1545,13 +1543,13 @@ def op_LD(p,opargs):
             if r1 > 7:
                 fatal("Invalid argument")
 
-            if r1==7 and re.search("\A\s*\(\s*BC\s*\)\s*\Z", arg2, re.IGNORECASE):
+            if r1==7 and re.search(r"\A\s*\(\s*BC\s*\)\s*\Z", arg2, re.IGNORECASE):
                 dump([0x0a])
                 return 1
-            if r1==7 and re.search("\A\s*\(\s*DE\s*\)\s*\Z", arg2, re.IGNORECASE):
+            if r1==7 and re.search(r"\A\s*\(\s*DE\s*\)\s*\Z", arg2, re.IGNORECASE):
                 dump([0x1a])
                 return 1
-            match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", arg2)
+            match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", arg2)
             if match:
                 if r1 != 7:
                     fatal("Illegal indirection")
@@ -1573,13 +1571,13 @@ def op_LD(p,opargs):
     
     elif r2==7:
         # ld (bc/de/nn),a
-        if re.search("\A\s*\(\s*BC\s*\)\s*\Z", arg1, re.IGNORECASE):
+        if re.search(r"\A\s*\(\s*BC\s*\)\s*\Z", arg1, re.IGNORECASE):
             dump([0x02])
             return 1
-        if re.search("\A\s*\(\s*DE\s*\)\s*\Z", arg1, re.IGNORECASE):
+        if re.search(r"\A\s*\(\s*DE\s*\)\s*\Z", arg1, re.IGNORECASE):
             dump([0x12])
             return 1
-        match = re.search("\A\s*\(\s*(.*)\s*\)\s*\Z", arg1)
+        match = re.search(r"\A\s*\(\s*(.*)\s*\)\s*\Z", arg1)
         if match:
             if p==2:
                 nn = parse_expression(match.group(1), word=1)
@@ -1740,7 +1738,6 @@ def assembler_pass(p, inputfile):
             else:
                 opcode += i
             
-            lasti = i
             i = nexti
         
         symbol = symbol.strip()
@@ -1882,7 +1879,7 @@ if (objectfile != '') and (len(file_args) != 1):
     sys.exit(2)
 
 if (outputfile == '') and (objectfile == ''):
-    outputfile = os.path.splitext(file_args[0])[0] + ".dsk";
+    outputfile = os.path.splitext(file_args[0])[0] + ".dsk"
 
 image = new_disk_image()
 
@@ -1966,7 +1963,7 @@ for inputfile in file_args:
         sys.exit(1)
     if len(forstack) > 0:
         print("Error: Mismatched EQU FOR and NEXT statements, too many EQU FOR")
-        for item in forstackstack:
+        for item in forstack:
             print(item[1])
         sys.exit(1)
 
