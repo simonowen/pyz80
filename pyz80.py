@@ -442,7 +442,7 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
             break
 
     while 1:
-        match = re.search(r'defined\s*\(\s*(.*)\s*\)', arg, re.IGNORECASE)
+        match = re.search(r'defined\s*\(\s*(.*?)\s*\)', arg, re.IGNORECASE)
         if match:
             result = (get_symbol(match.group(1)) != None)
             arg = arg.replace(match.group(0),str(int(result)))
