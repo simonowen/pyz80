@@ -1,5 +1,10 @@
 language: python
 
+addons:
+  apt:
+    packages:
+      - ant
+
 python:
  
   - "2.7"
