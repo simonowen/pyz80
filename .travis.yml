@@ -6,13 +6,12 @@ addons:
       - ant
 
 python:
- 
   - "2.7"
   - "3.6"
+  - "3.7"
+  - "3.8"
   
 script:
-
   - cd testing
   - ant test-valid -Dpython=python
   - ant test-invalid -Dpython=python
-  
