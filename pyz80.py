@@ -1980,9 +1980,8 @@ for inputfile in file_args:
         print(printsymbols)
 
     if exportfile:
-        f = open(exportfile,'w')
-        p = pickle.Pickler(f)
-        p.dump(symboltable)
+        with open(exportfile, 'wb') as f:
+            pickle.dump(symboltable, f, protocol=0)
 
     if mapfile:
         addrmap = {}
