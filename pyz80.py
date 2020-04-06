@@ -1921,15 +1921,13 @@ for inputfile in file_args:
         set_symbol(sym[0], int(sym[1]))
 
     for picklefilename in importfiles:
-        picklefile = open(picklefilename)
-        u = pickle.Unpickler(picklefile)
-        ImportSymbols = u.load()
+        with open(picklefilename, "rb") as f:
+            ImportSymbols = pickle.load(f)
         for sym,val in list(ImportSymbols.items()):
             if not CASE:
                 symboltable[sym.upper()]=val
             else:
                 symboltable[sym]=val
-        picklefile.close()
 
     firstpage=32
     firstpageoffset=16384
