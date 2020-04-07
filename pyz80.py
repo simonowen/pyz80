@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+from __future__ import division
 
 # TODO: define and assemble macro blocks
 # added FILESIZE("filename")
@@ -37,6 +38,8 @@ def printusage():
     print("   treat source labels as case sensitive (as COMET itself did)")
     print("--nobodmas")
     print("   treat arithmetic operators without precedence (as COMET itself did)")
+    print("--intdiv")
+    print("   force all division to give an integer result (as COMET itself did)")
     print("-s regexp")
     print("   print the value of any symbols matching the given regular expression")
     print("   This may be used multiple times to output more than one subset")
@@ -454,7 +457,10 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     arg = arg.replace('%','0b') # COMET syntax for binary literals (parsed later, change to save confusion with modulus)
     arg = arg.replace('\\','%') # COMET syntax for modulus
     arg = arg.replace('&','0x') # COMET syntax for hex numbers
-    
+
+    if INTDIV:
+        arg = re.sub(r'(?<!/)/(?!/)', r'//', arg) # COMET integer division
+
     #    don't do these except at the start of a token:    
     arg = re.sub('\\b0X', '0x', arg) # darnit, this got capitalized
     arg = re.sub('\\b0B', '0b', arg) # darnit, this got capitalized
@@ -1778,7 +1784,7 @@ def assembler_pass(p, inputfile):
 ###########################################################################
 
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','obj=','case','nobodmas','exportfile=','importfile=','mapfile=','lstfile='])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','obj=','case','nobodmas','intdiv','exportfile=','importfile=','mapfile=','lstfile='])
     file_args = [os.path.normpath(x) for x in file_args]
 except getopt.GetoptError:
     printusage()
@@ -1792,6 +1798,7 @@ PYTHONERRORS = False
 ZIP = True
 CASE = False
 NOBODMAS = False
+INTDIV = False
 
 lstcode=""
 listsymbols=[]
@@ -1836,6 +1843,9 @@ for option,value in option_args:
     
     if option in ['--case']:
         CASE = True
+
+    if option in ['--intdiv']:
+        INTDIV = True
 
     if option in ['--exportfile']:
         if exportfile == None:
