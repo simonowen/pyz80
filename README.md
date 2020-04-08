@@ -90,6 +90,10 @@ Please note this applies only to symbols. Instruction op-codes are always accept
 
 If this option is given, then all expressions will be parsed from left to right instead of using the usual operator ordering rules, although brackets can still be used to specify precedence. For example the result of 10+10/10 in this mode will be two and not eleven (this is the behaviour of the original COMET assembler).
 
+`--intdiv`
+
+If this option is given, then all arithmetic divisions will give integer results, instead of floating point results. For example the result of 3/2 will be 1 and not 1.5 (this is the behaviour of the original COMET assembler). This will mostly affect calculations where an intermediate result is used for further calculations. The final value will always be truncated to an integer for register assignments.
+
 `-s regexp`
 
 This option allows you to print out the final value of one or more symbols at the end of assembling a source file. If you specify the text name of a particular symbol, pyz80 will print out the value of that symbol, and any others whose name completely contains what you have asked for:

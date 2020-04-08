@@ -357,7 +357,6 @@ def set_symbol(sym, value, explicit_currentfile=None, is_label=False):
     if sym[0]=='@':
         sym = sym + '@' + file_and_stack(explicit_currentfile=explicit_currentfile)
     symboltable[sym] = value 
-    symbolcase[sym] = symorig
 
     if is_label:
         labeltable[sym] = value
@@ -1906,7 +1905,6 @@ for inputfile in file_args:
         sys.exit(2)
 
     symboltable = {}
-    symbolcase = {}
     symusetable = {}
     labeltable = {}
     memory = []
@@ -1934,10 +1932,8 @@ for inputfile in file_args:
         with open(picklefilename, "rb") as f:
             ImportSymbols = pickle.load(f)
         for sym,val in list(ImportSymbols.items()):
-            if not CASE:
-                symboltable[sym.upper()]=val
-            else:
-                symboltable[sym]=val
+            symkey = sym if CASE else sym.upper()
+            symboltable[symkey]=val
 
     firstpage=32
     firstpageoffset=16384
@@ -1981,8 +1977,8 @@ for inputfile in file_args:
     for symreg in listsymbols:
         # add to printsymbols any pair from symboltable whose key matches symreg
         for sym in symboltable:
-            if re.search(symreg, sym, re.IGNORECASE):
-                printsymbols[symbolcase[sym]] = symboltable[sym]
+            if re.search(symreg, sym, 0 if CASE else re.IGNORECASE):
+                printsymbols[sym] = symboltable[sym]
 
     if printsymbols != {}:
         print(printsymbols)
@@ -1995,7 +1991,8 @@ for inputfile in file_args:
         addrmap = {}
         for sym,count in sorted(list(symusetable.items()), key=lambda x: x[1]):
             if sym in labeltable:
-                addrmap[labeltable[sym]] = symbolcase[sym]
+                symkey = sym if CASE else sym.upper()
+                addrmap[labeltable[sym]] = symkey
 
         with open(mapfile,'w') as f:
             for addr,sym in sorted(addrmap.items()):
