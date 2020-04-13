@@ -356,7 +356,10 @@ def set_symbol(sym, value, explicit_currentfile=None, is_label=False):
 
     if sym[0]=='@':
         sym = sym + '@' + file_and_stack(explicit_currentfile=explicit_currentfile)
-    symboltable[sym] = value 
+
+    symboltable[sym] = value
+    if sym != symorig:
+        symbolcase[sym] = symorig
 
     if is_label:
         labeltable[sym] = value
@@ -1905,6 +1908,7 @@ for inputfile in file_args:
         sys.exit(2)
 
     symboltable = {}
+    symbolcase = {}
     symusetable = {}
     labeltable = {}
     memory = []
@@ -1934,6 +1938,8 @@ for inputfile in file_args:
         for sym,val in list(ImportSymbols.items()):
             symkey = sym if CASE else sym.upper()
             symboltable[symkey]=val
+            if symkey != sym:
+                symbolcase[symkey] = sym
 
     firstpage=32
     firstpageoffset=16384
@@ -1978,21 +1984,26 @@ for inputfile in file_args:
         # add to printsymbols any pair from symboltable whose key matches symreg
         for sym in symboltable:
             if re.search(symreg, sym, 0 if CASE else re.IGNORECASE):
-                printsymbols[sym] = symboltable[sym]
+                printsymbols[symbolcase.get(sym, sym)] = symboltable[sym]
 
     if printsymbols != {}:
         print(printsymbols)
 
     if exportfile:
         with open(exportfile, 'wb') as f:
-            pickle.dump(symboltable, f, protocol=0)
+            pickle.dump({ symbolcase.get(k, k):v for k, v in symboltable.items() }, f, protocol=0)
 
     if mapfile:
         addrmap = {}
         for sym,count in sorted(list(symusetable.items()), key=lambda x: x[1]):
             if sym in labeltable:
                 symkey = sym if CASE else sym.upper()
-                addrmap[labeltable[sym]] = symkey
+                symorig = symbolcase.get(sym, sym)
+
+                if symorig[0] == '@':
+                    symorig += ':' + sym.rsplit(':', 1)[1]
+
+                addrmap[labeltable[sym]] = symorig
 
         with open(mapfile,'w') as f:
             for addr,sym in sorted(addrmap.items()):
