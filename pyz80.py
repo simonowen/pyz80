@@ -533,6 +533,8 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
                         literal *= 2
                         if digit == '1':
                             literal += 1
+                        elif digit != '0':
+                            fatal("Invalid binary digit '"+digit+"'")
                     testsymbol = str(literal)
                 
                 elif testsymbol[0]=='0' and len(testsymbol)>1 and testsymbol[1]!='x':
