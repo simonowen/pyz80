@@ -454,11 +454,10 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
             
         else:
             break
-    
     arg = arg.replace('$','('+str(origin)+')')
     arg = arg.replace('%','0b') # COMET syntax for binary literals (parsed later, change to save confusion with modulus)
     arg = arg.replace('\\','%') # COMET syntax for modulus
-    arg = arg.replace('&','0x') # COMET syntax for hex numbers
+    arg = re.sub('&([0-9a-fA-F]+\\b)', '0x\g<1>', arg) # COMET syntax for hex numbers
 
     if INTDIV:
         arg = re.sub(r'(?<!/)/(?!/)', r'//', arg) # COMET integer division
