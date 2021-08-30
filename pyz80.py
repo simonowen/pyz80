@@ -1649,17 +1649,11 @@ def op_ENDIF(p,opargs):
     return 0
 
 def assemble_instruction(p, line):
-    opcodeargs = line.split(None,1)
-    if '(' in opcodeargs[0]:
-        opcodeargs = [line[:line.index('(')] , line[line.index('('):] ]
-
-    if len(opcodeargs)>1:
-        args = opcodeargs[1].strip()
-    else:
-        args=''
-        
+    opcodeargs = re.match('^(\w+)(.*)', line).groups()
     inst = opcodeargs[0].upper()
-    if (ifstate < 2) or inst=='IF' or inst=='ELSE' or inst=='ENDIF':
+    args = opcodeargs[1].strip() if len(opcodeargs)>1 else ''
+
+    if (ifstate < 2) or inst in ('IF', 'ELSE', 'ENDIF'):
         functioncall = 'op_'+inst+'(p,args)'
         if PYTHONERRORS:
             return eval(functioncall)
