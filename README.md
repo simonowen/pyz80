@@ -1,7 +1,7 @@
 # pyz80 - a Z80 cross assembler
-Unofficial branch of http://sourceforge.net/projects/pyz80/ for fixes and enhancements.
+Unofficial branch of https://sourceforge.net/projects/pyz80/ for fixes and enhancements.
 
-[![Build Status](https://travis-ci.org/simonowen/pyz80.svg?branch=master)](https://travis-ci.org/simonowen/pyz80)
+[![Build Status](https://travis-ci.com/simonowen/pyz80.svg?branch=master)](https://app.travis-ci.com/github/simonowen/pyz80)
 
 **pyz80 - a Z80 cross assembler**
 
@@ -9,7 +9,7 @@ Version 1.21, released 11 July 2013
 
 By Andrew Collier
 
-[http://www.intensity.org.uk/contact.html](http://www.intensity.org.uk/contact.html)
+[https://www.intensity.org.uk/contact.html](https://www.intensity.org.uk/contact.html)
 
 **Introduction**
 
@@ -17,7 +17,7 @@ pyz80 is an assembler for the assembly language of the Z80 micro-processor.
 
 It is designed in particular for producing code to run on the Sam Coupé computer, and outputs disk images  which can be loaded by the SimCoupe emulator, or copied onto floppy disk for use with genuine hardware Sams. Nonetheless, it may be useful for users of other Z80-based platforms as well.
 
-pyz80 is distributed under the terms of the [GNU General Public License](http://www.gnu.org/licenses/gpl.html). You can download and use it at no cost. See the file COPYING for more information.
+pyz80 is distributed under the terms of the [GNU General Public License](https://www.gnu.org/licenses/gpl.html). You can download and use it at no cost. See the file COPYING for more information.
 
 **Installation**
 
@@ -25,7 +25,7 @@ pyz80 is written in python, and should work on MacOS X, Linux, Windows and other
 
 If you do not have python already, installers can be downloaded from:
 
-[http://www.python.org/download/](http://www.python.org/download/)
+[https://www.python.org/downloads/](https://www.python.org/downloads/)
 
 **Usage**
 
@@ -343,7 +343,7 @@ Thanks to Simon Owen and other users for their feedback during development.
 
 pyz80 web page:
 
-[http://www.intensity.org.uk/samcoupe/pyz80.html](http://www.intensity.org.uk/samcoupe/pyz80.html)
+[https://www.intensity.org.uk/samcoupe/pyz80.html](https://www.intensity.org.uk/samcoupe/pyz80.html)
 
 SimCoupe Homepage:
 
@@ -351,11 +351,11 @@ SimCoupe Homepage:
 
 World of Sam archive:
 
-[http://www.worldofsam.org/](http://www.worldofsam.org/)
+[https://www.worldofsam.org/](https://www.worldofsam.org/)
 
 Wikipedia entry for the SAM Coupé (and for more links):
 
-[http://wikipedia.org/wiki/Sam\_Coupe](http://wikipedia.org/wiki/Sam_Coupe)
+[https://wikipedia.org/wiki/Sam\_Coupe](https://wikipedia.org/wiki/SAM_Coupé)
 
 **Disclaimer**
 

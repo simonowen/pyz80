@@ -24,7 +24,7 @@ def printusage():
     print("   save the output code as a raw binary file at the given path")
     print("-D symbol")
     print("-D symbol=value")
-    print("   Define a symbol before parseing the source")
+    print("   Define a symbol before parsing the source")
     print("   (value is integer; if omitted, assume 1)")
     print("--exportfile=filename")
     print("   Save all symbol information into the given file")
