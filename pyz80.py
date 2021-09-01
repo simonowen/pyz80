@@ -1649,9 +1649,12 @@ def op_ENDIF(p,opargs):
     return 0
 
 def assemble_instruction(p, line):
-    opcodeargs = re.match('^(\w+)(.*)', line).groups()
-    inst = opcodeargs[0].upper()
-    args = opcodeargs[1].strip() if len(opcodeargs)>1 else ''
+    m = re.match('^(\w+)(.*)', line)
+    if not m:
+        fatal("Expected opcode or directive")
+
+    inst = m[1].upper()
+    args = m[2].strip()
 
     if (ifstate < 2) or inst in ('IF', 'ELSE', 'ENDIF'):
         functioncall = 'op_'+inst+'(p,args)'
@@ -1663,7 +1666,7 @@ def assemble_instruction(p, line):
             except SystemExit as e:
                 sys.exit(e)
             except:
-                fatal("OpCode not recognised")
+                fatal("Opcode not recognised")
     else:
         return 0
 
