@@ -1649,12 +1649,12 @@ def op_ENDIF(p,opargs):
     return 0
 
 def assemble_instruction(p, line):
-    m = re.match('^(\w+)(.*)', line)
-    if not m:
+    match = re.match('^(\w+)(.*)', line)
+    if not match:
         fatal("Expected opcode or directive")
 
-    inst = m[1].upper()
-    args = m[2].strip()
+    inst = match.group(1).upper()
+    args = match.group(2).strip()
 
     if (ifstate < 2) or inst in ('IF', 'ELSE', 'ENDIF'):
         functioncall = 'op_'+inst+'(p,args)'
