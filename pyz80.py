@@ -578,21 +578,21 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     
     if signed:
         if byte:
-            if (  -128 < narg > 127):
-                warning ("Signed byte value truncated from "+str(narg))
+            if narg < -128 or narg > 127:
+                fatal ("Signed byte value is out of range: "+str(narg))
             narg = (narg + 128)%256 -128
         elif word:
-            if (  -32768 < narg > 32767):
+            if narg < -32768 or narg > 32767:
                 warning ("Signed word value truncated from "+str(narg))
             narg = (narg + 32768)%65536 - 32768
     else:
         if byte:
-            if (  0 < narg > 255):
+            if narg < 0 or narg > 255:
                 warning ("Unsigned byte value truncated from "+str(narg))
             narg %= 256
         elif word:
-            if (  0 < narg > 65535):
-                warning ("Unsigned byte value truncated from "+str(narg))
+            if narg < 0 or narg > 65535:
+                warning ("Unsigned word value truncated from "+str(narg))
             narg %= 65536
     return narg
 
@@ -660,7 +660,7 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=
                 m = 6
                 prefix = [0xdd]
                 if p==2:
-                    postfix = [parse_expression(match.group(1), byte=1)]
+                    postfix = [(parse_expression(match.group(1), byte=1, signed=1)+256)%256]
                 else:
                     postfix = [0]
 
@@ -677,7 +677,7 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=
                 m = 6
                 prefix = [0xfd]
                 if p==2:
-                    postfix = [parse_expression(match.group(1), byte=1)]
+                    postfix = [(parse_expression(match.group(1), byte=1, signed=1)+256)%256]
                 else:
                     postfix = [0]
     

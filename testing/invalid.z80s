@@ -21,6 +21,11 @@
 
 	ex hl,de
 
+	ld (ix+128),n
+	ld (iy+128),n
+	ld (ix-129),n
+	ld (iy-129),n
+
 ; Assemblers warn/ignore 16-bit truncation, so check only 8-bit values
 ;	ld b,n
 ;	ld c,n

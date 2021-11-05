@@ -749,3 +749,9 @@ o:	equ &44
 	cpdr
 	indr
 	otdr
+
+; Relative offsets
+    ld (ix-128),a
+    ld (ix+0),a
+    ld (ix),a
+    ld (ix+127),a
