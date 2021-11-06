@@ -751,7 +751,23 @@ o:	equ &44
 	otdr
 
 ; Relative offsets
-    ld (ix-128),a
-    ld (ix+0),a
-    ld (ix),a
-    ld (ix+127),a
+    ld   (ix-128),a
+    ld   (ix+0),a
+    ld   (ix),a
+    ld   (ix+127),a
+
+; Value truncation
+    ld   a,-1
+    ld   a,-2
+    ld   a,-128
+    ld   a,-129
+    ld   a,-130
+    ld   a,256
+    ld   a,257
+    ld   hl,-1
+    ld   hl,-2
+    ld   hl,-32767
+    ld   hl,-32768
+    ld   hl,-32769
+    ld   hl,65536
+    ld   hl,65537

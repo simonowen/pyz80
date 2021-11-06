@@ -576,24 +576,16 @@ def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     narg = int(eval(argcopy))
 #    print(arg, " -> ",argcopy," == ",narg)
     
-    if signed:
+    if not signed:
         if byte:
-            if narg < -128 or narg > 127:
-                fatal ("Signed byte value is out of range: "+str(narg))
-            narg = (narg + 128)%256 -128
-        elif word:
-            if narg < -32768 or narg > 32767:
-                warning ("Signed word value truncated from "+str(narg))
-            narg = (narg + 32768)%65536 - 32768
-    else:
-        if byte:
-            if narg < 0 or narg > 255:
+            if narg < -128 or narg > 255:
                 warning ("Unsigned byte value truncated from "+str(narg))
             narg %= 256
         elif word:
-            if narg < 0 or narg > 65535:
+            if narg < -32768 or narg > 65535:
                 warning ("Unsigned word value truncated from "+str(narg))
             narg %= 65536
+
     return narg
 
 def double(arg, allow_af_instead_of_sp=0, allow_af_alt=0, allow_index=1):
@@ -648,39 +640,25 @@ def single(arg, allow_i=0, allow_r=0, allow_index=1, allow_offset=1, allow_half=
         m = 6
     
     if m==-1 and allow_index:
-        match = re.search(r"\A\s*\(\s*IX\s*\)\s*\Z", arg, re.IGNORECASE)
+        match = re.search(r"\A\s*\(\s*(I[XY])\s*\)\s*\Z", arg, re.IGNORECASE)
         if match:
             m = 6
-            prefix = [0xdd]
+            prefix = [0xdd] if match.group(1).lower() == 'ix' else [0xfd]
             postfix = [0]
             
         elif allow_offset:
-            match = re.search(r"\A\s*\(\s*IX\s*([+-].*)\s*\)\s*\Z", arg, re.IGNORECASE)
+            match = re.search(r"\A\s*\(\s*(I[XY])\s*([+-].*)\s*\)\s*\Z", arg, re.IGNORECASE)
             if match:
                 m = 6
-                prefix = [0xdd]
+                prefix = [0xdd] if match.group(1).lower() == 'ix' else [0xfd]
                 if p==2:
-                    postfix = [(parse_expression(match.group(1), byte=1, signed=1)+256)%256]
+                    offset = parse_expression(match.group(2), byte=1, signed=1)
+                    if offset < -128 or offset > 127:
+                        fatal ("invalid index offset: "+str(offset))
+                    postfix = [(offset + 256) % 256]
                 else:
                     postfix = [0]
 
-    if m==-1 and allow_index:
-        match = re.search(r"\A\s*\(\s*IY\s*\)\s*\Z", arg, re.IGNORECASE)
-        if match:
-            m = 6
-            prefix = [0xfd]
-            postfix = [0]
-
-        elif allow_offset:
-            match = re.search(r"\A\s*\(\s*IY\s*([+-].*)\s*\)\s*\Z", arg, re.IGNORECASE)
-            if match:
-                m = 6
-                prefix = [0xfd]
-                if p==2:
-                    postfix = [(parse_expression(match.group(1), byte=1, signed=1)+256)%256]
-                else:
-                    postfix = [0]
-    
     return prefix,m,postfix
 
 def condition(arg):
