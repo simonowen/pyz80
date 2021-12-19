@@ -63,7 +63,7 @@ def printlicense():
     print("Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA")
 
 import getopt
-import sys, os
+import sys, os, datetime
 import array
 import fileinput
 import re
@@ -100,6 +100,7 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
     global firstpageoffset
 
     if fromfile != None:
+        modified = datetime.datetime.fromtimestamp(os.path.getmtime(fromfile))
         fromfilefile = open(fromfile,'rb')
         fromfilefile.seek(0,2)
         filelength = fromfilefile.tell()
@@ -107,6 +108,8 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
         fromfilefile.seek(0)
         fromfile = array.array('B')
         fromfile.fromfile(fromfilefile, filelength)
+    else:
+        modified = datetime.datetime.now()
 
     sectors_already_used = 0
     # we're writing the whole image, so we can take a bit of a shortcut
@@ -172,6 +175,11 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
         image[dirpos+243] = 255
         image[dirpos+244] = 255
 
+    image[dirpos+245] = modified.day
+    image[dirpos+246] = modified.month
+    image[dirpos+247] = modified.year % 100 + 100
+    image[dirpos+248] = modified.hour
+    image[dirpos+249] = modified.minute
 
     side = starting_side
     track = starting_track
