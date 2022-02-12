@@ -97,7 +97,10 @@ def dsk_at(track,side,sector):
 
 
 def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, execpage=0, execoffset=0, filelength=None, fromfile=None ):
-    global firstpageoffset
+    global firstpageoffset, global_currentfile, global_currentline
+
+    global_currentfile = 'add file'
+    global_currentline = ''
 
     if fromfile != None:
         modified = datetime.datetime.fromtimestamp(os.path.getmtime(fromfile))
