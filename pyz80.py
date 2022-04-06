@@ -1870,6 +1870,8 @@ for option,value in option_args:
 
     if option in ['-I']:
         includefiles.append(value)
+        if os.path.basename(includefiles[0]).lower() == 'samdos9':
+            SPT = 9
 
 if len(file_args) == 0 and len(includefiles) == 0:
     print("No input file specified")
