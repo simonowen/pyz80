@@ -42,6 +42,7 @@ test: testing/test.z80s testing/include.z80s
 	./pyz80.py -o test.dsk.gz -s . testing/test.z80s
 	cp testing/golden.dsk.gz golden.dsk.gz
 	gunzip -f test.dsk.gz golden.dsk.gz
+	cat /dev/zero | dd conv=notrunc of=test.dsk bs=1 seek=245 count=5 # test.o file timestamp non-deterministic
 	cmp test.dsk golden.dsk
 	@echo --== TESTING COMPLETED OK ==--
 
