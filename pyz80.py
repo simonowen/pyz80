@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 from __future__ import division
+import math
 
 # TODO: define and assemble macro blocks
 # added FILESIZE("filename")
@@ -135,7 +136,7 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
     for i in range(10):
         image[dirpos+1+i]  = ord((filename+"          ")[i])
 
-    nsectors = 1 + (filelength+9)//510
+    nsectors = math.ceil(( filelength + 9 ) / 510)
     image[dirpos+11] = nsectors // 256 # MSB number of sectors used
     image[dirpos+12] = nsectors % 256 # LSB number of sectors used
 
