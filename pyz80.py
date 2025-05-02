@@ -16,6 +16,9 @@ def printusage():
     print("   save the resulting disk image at the given path")
     print("--nozip")
     print("   do not compress the resulting disk image")
+    print("-B filepath")
+    print("   Bootable (usually DOS) file added first to disk image, but")
+    print("   only if the first assembled file has no BOOT signature.")
     print("-I filepath")
     print("   Add this file to the disk image before assembling")
     print("   May be used multiple times to add multiple files")
@@ -70,19 +73,12 @@ import pickle
 import math # for use by expressions in source files
 import random # note: in use via eval strings
 
-def new_disk_image():
-
-    image = array.array('B')
-    image.append(0)
+def new_disk_image(sectors_per_track):
+    global SPT
+    SPT = sectors_per_track
     targetsize = 80*SPT*2*512
     # disk image is arranged as: tr 0 s 1-10, tr 128 s 1-10, tr 1 s 1-10, tr 129 s 1-10 etc
-
-    while len(image) < targetsize:
-        image.extend(image)
-    while len(image) > targetsize:
-        image.pop()
-
-    return image
+    return array.array('B', [0] * targetsize)
 
 def dsk_at(track,side,sector):
     return (track*SPT*2+side*SPT+(sector-1))*512
@@ -1758,7 +1754,7 @@ def assembler_pass(p, inputfile):
 ###########################################################################
 
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:I:', ['version','help','nozip','obj=','case','nobodmas','intdiv','exportfile=','importfile=','mapfile=','lstfile='])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:B:I:', ['version','help','nozip','obj=','case','nobodmas','intdiv','exportfile=','importfile=','mapfile=','lstfile='])
     file_args = [os.path.normpath(x) for x in file_args]
 except getopt.GetoptError:
     printusage()
@@ -1773,13 +1769,14 @@ ZIP = True
 CASE = False
 NOBODMAS = False
 INTDIV = False
-SPT = 10
+SPT = None
 
 lstcode=""
 listsymbols=[]
 predefsymbols=[]
 includefiles=[]
 importfiles=[]
+bootfile = None
 exportfile = None
 mapfile = None
 listingfile = None
@@ -1852,10 +1849,16 @@ for option,value in option_args:
     if option in ['-D']:
         predefsymbols.append(value)
 
+    if option in ['-B']:
+        if bootfile == None:
+            bootfile = value
+        else:
+            print("Boot file specified twice")
+            printusage()
+            sys.exit(2)
+
     if option in ['-I']:
         includefiles.append(value)
-        if os.path.basename(includefiles[0]).lower() == 'samdos9':
-            SPT = 9
 
 if len(file_args) == 0 and len(includefiles) == 0:
     print("No input file specified")
@@ -1870,10 +1873,7 @@ if (objectfile != '') and (len(file_args) != 1):
 if (outputfile == '') and (objectfile == ''):
     outputfile = os.path.splitext(file_args[0])[0] + ".dsk"
 
-image = new_disk_image()
-
-for pathname in includefiles:
-    save_file_to_image(image,pathname)
+image = new_disk_image(10)
 
 for inputfile in file_args:
 
@@ -1983,6 +1983,20 @@ for inputfile in file_args:
         with open(mapfile,'w') as f:
             for addr,sym in sorted(addrmap.items()):
                 f.write("%04X=%s\n" % (addr,sym))
+
+    boot_page, boot_offset = (1,0) if firstpage == 32 else (firstpage,firstpageoffset)
+    boot_sig = memory[boot_page][boot_offset+0xf7:boot_offset+0xf7+4]
+    bootable = bytes(b & 0x5F for b in boot_sig) == b'BOOT'
+
+    if bootfile and not bootable:
+        if os.path.basename(bootfile.lower()) == 'samdos9':
+            image = new_disk_image(9)
+        save_file_to_image(image, bootfile)
+    bootfile = None
+
+    for pathname in includefiles:
+        save_file_to_image(image, pathname)
+    includefiles = []
 
     save_memory(memory, image=image, filename=os.path.splitext(os.path.basename(inputfile))[0])
     if objectfile != "":

@@ -1,0 +1,13 @@
+; File with "bootable" signature.
+
+            org &8000
+            dump $
+            nop
+
+            org &8009
+            dump $
+            ret
+
+            org &80f7
+            dump $
+            defm "BOOT"

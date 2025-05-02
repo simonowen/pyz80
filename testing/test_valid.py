@@ -8,11 +8,14 @@ import subprocess
 
 curr_dir = os.path.split(__file__)[0]
 pyz80_path = os.path.join(curr_dir, '../pyz80.py')
+dummydos_path = os.path.join(curr_dir, 'dummydos')
 
 test_files = [
     ("golden.z80s", "golden.dsk.gz", "golden.bin", ["--nozip"]),
     ("golden.z80s", "golden.dsk.gz", "golden.bin", []),
     ("valid.z80s", None, "valid.bin", []),
+    ("bootable.z80s", "bootable.dsk", None, ["-B", dummydos_path]),
+    ("unbootable.z80s", "unbootable.dsk", None, ["-B", dummydos_path]),
 ]
 
 
