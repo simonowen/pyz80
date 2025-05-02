@@ -1,7 +1,3 @@
 .*
 !.gitignore
-!.travis.yml
-*-release/
-*.tgz
-*.dsk
-*.dsk.gz
+!.github

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from __future__ import print_function
-from __future__ import division
 import math
 
 # TODO: define and assemble macro blocks
@@ -66,17 +64,11 @@ def printlicense():
 import getopt
 import sys, os, datetime
 import array
-import fileinput
 import re
 import gzip
+import pickle
 import math # for use by expressions in source files
-import random
-
-# Try for native pickle (2.x), fall back on Python version (3.x)
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import random # note: in use via eval strings
 
 def new_disk_image():
 
@@ -337,8 +329,8 @@ def warning(message):
     print('\t', global_currentline.strip())
 
 def fatal(message):
-    print(global_currentfile, 'error:', message)
-    print ('\t', global_currentline.strip())
+    print(global_currentfile, 'error:', message, file=sys.stderr)
+    print ('\t', global_currentline.strip(), file=sys.stderr)
     sys.exit(1)
 
 def expand_symbol(sym):
@@ -428,22 +420,14 @@ def get_symbol(sym):
                                     closest = abs(difference)
                                     closestKey = key
 
-
-
             if closestKey != None:
                 sym = closestKey
-
-
-
 
     if sym in symboltable:
         symusetable[sym] = symusetable.get(sym,0)+1
         return symboltable[sym]
 
     return None
-
-
-
 
 def parse_expression(arg, signed=0, byte=0, word=0, silenterror=0):
     if ',' in arg:
@@ -2003,7 +1987,6 @@ for inputfile in file_args:
     save_memory(memory, image=image, filename=os.path.splitext(os.path.basename(inputfile))[0])
     if objectfile != "":
         save_memory(memory, filename=objectfile)
-
 
 if outputfile != '':
     save_disk_image(image, outputfile)
