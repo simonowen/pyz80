@@ -16,6 +16,7 @@ test_files = [
     ("valid.z80s", None, "valid.bin", []),
     ("bootable.z80s", "bootable.dsk", None, ["-B", dummydos_path]),
     ("unbootable.z80s", "unbootable.dsk", None, ["-B", dummydos_path]),
+    ("utf8-bom.z80s", None, None, []),
 ]
 
 

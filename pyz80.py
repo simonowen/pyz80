@@ -1659,7 +1659,7 @@ def assembler_pass(p, inputfile):
         global_path = os.path.dirname(this_currentfilename)
 
     try:
-        currentfile = open(this_currentfilename,'r')
+        currentfile = open(this_currentfilename,'r',encoding='utf-8-sig')
         wholefile=currentfile.readlines()
         wholefile.insert(0, '') # prepend blank so line numbers are 1-based
         currentfile.close()
