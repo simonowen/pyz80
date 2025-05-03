@@ -45,6 +45,8 @@ def printusage():
     print("-s regexp")
     print("   print the value of any symbols matching the given regular expression")
     print("   This may be used multiple times to output more than one subset")
+    print("-x")
+    print("   display values from the -s option and PRINT directives in hex")
     print("-e")
     print("   use python's own error handling instead of trying to catch parse errors")
 
@@ -743,7 +745,7 @@ def op_PRINT(p, opargs):
         else:
             a = parse_expression(expr, silenterror=True)
             if a:
-                text.append(str(a))
+                text.append(f"{a:x}" if HEX else str(a))
             else:
                 text.append("?")
     print(global_currentfile, "PRINT: ", ",".join(text))
@@ -1754,7 +1756,7 @@ def assembler_pass(p, inputfile):
 ###########################################################################
 
 try:
-    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:B:I:', ['version','help','nozip','obj=','case','nobodmas','intdiv','exportfile=','importfile=','mapfile=','lstfile='])
+    option_args, file_args = getopt.getopt(sys.argv[1:], 'ho:s:eD:B:I:x', ['version','help','nozip','obj=','case','nobodmas','intdiv','exportfile=','importfile=','mapfile=','lstfile='])
     file_args = [os.path.normpath(x) for x in file_args]
 except getopt.GetoptError:
     printusage()
@@ -1769,6 +1771,7 @@ ZIP = True
 CASE = False
 NOBODMAS = False
 INTDIV = False
+HEX = False
 SPT = None
 
 lstcode=""
@@ -1806,6 +1809,9 @@ for option,value in option_args:
 
     if option in ['-e']:
         PYTHONERRORS = True # let python do its own error handling
+
+    if option in ['-x']:
+        HEX = True
 
     if option in ['--nozip']:
         ZIP = False # save the disk image without compression
@@ -1959,7 +1965,8 @@ for inputfile in file_args:
         # add to printsymbols any pair from symboltable whose key matches symreg
         for sym in symboltable:
             if re.search(symreg, sym, 0 if CASE else re.IGNORECASE):
-                printsymbols[symbolcase.get(sym, sym)] = symboltable[sym]
+                value = symboltable[sym]
+                printsymbols[symbolcase.get(sym, sym)] = f"{value:x}" if HEX else value
 
     if printsymbols != {}:
         print(printsymbols)
