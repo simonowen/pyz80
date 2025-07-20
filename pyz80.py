@@ -7,7 +7,7 @@ import math
 # defs doesn't cause bytes to be written to output unless real data follows
 
 def printusage():
-    print("pyz80 by Andrew Collier, modified by Simon Owen")
+    print("pyz80 by Andrew Collier, modified by Simon Owen and Adrian Brown")
     print(" https://github.com/simonowen/pyz80/")
     print("Usage:")
     print("     pyz80 (options) inputfile(s)")
@@ -365,6 +365,7 @@ def set_symbol(sym, value, explicit_currentfile=None, is_label=False):
 
     if is_label:
         labeltable[sym] = value
+
 
 def get_symbol(sym):
     symorig = expand_symbol(sym)
@@ -785,7 +786,8 @@ def op_EQU(p,opargs):
 
         else:
             if p==1:
-                set_symbol(symbol, parse_expression(opargs, signed=1, silenterror=1))
+                expr_result = parse_expression(opargs, signed=1, silenterror=1)
+                set_symbol(symbol, expr_result)
             else:
                 expr_result = parse_expression(opargs, signed=1)
 
@@ -1620,6 +1622,76 @@ def op_ENDIF(p,opargs):
 
     return 0
 
+def op_STRUCT(p,opargs):
+    global symboltable, structstack, structstate
+    check_args(opargs,0)
+    if (symbol):
+            sizeof_symbol = symbol + ".SizeOf"
+            structstack.append([symbol, sizeof_symbol])
+            set_symbol(sizeof_symbol, 0)
+
+            # We are in a struct
+            structstate = 1
+    else:
+        warning("STRUCT without symbol name")
+
+    return 0
+
+def op_RS(p,opargs) :
+    global symboltable, structstack, structstate
+
+    check_args(opargs,1)
+
+    if ( len(structstack) == 0 ) : 
+        warning("RS used outside of STRUCT")
+        return 0
+    
+    # Work out the size
+    cur_size = 0
+    str_sym = symbol
+
+    for s in structstack[::-1] :
+        # Get the current sizeof
+        cur_size = cur_size + get_symbol(s[1])
+
+        # Set the current symbol size
+        str_sym = s[0] + "." + str_sym
+        set_symbol(str_sym, cur_size)
+
+    # Work out the size
+    expr_result = parse_expression(opargs, signed=1, silenterror=0)
+    
+    # Move the size on
+    set_symbol(structstack[-1][1], get_symbol(structstack[-1][1]) + expr_result)
+
+    return 0
+
+
+def op_ENDS(p,opargs):
+    global symboltable, structstack, structstate
+
+    check_args(opargs,0)
+
+    if ( structstate != 1 ) :
+        warning("ENDS without matching STRUCT")
+        return 0
+
+    # Pull off the last stuct
+    ends_symbol, ends_sizeof_symbol = structstack.pop()
+    ends_sizeof = get_symbol(ends_sizeof_symbol)
+
+    # If this was the last struct on the stack we have done, else we now need to step this size past the outer struct
+    if ( len(structstack) > 0 ) : 
+        outer_struct = structstack.pop()
+        outer_sizeof = get_symbol(outer_struct[1])
+        set_symbol(outer_struct[1], outer_sizeof + ends_sizeof)
+
+        structstack.append(outer_struct)
+    else :
+        structstate = 0
+
+    return 0
+
 def assemble_instruction(p, line):
     match = re.match(r'^(\w+)(.*)', line)
     if not match:
@@ -1628,7 +1700,15 @@ def assemble_instruction(p, line):
     inst = match.group(1).upper()
     args = match.group(2).strip()
 
-    if (ifstate < 2) or inst in ('IF', 'ELSE', 'ENDIF'):
+    # Check the struct state
+    if (structstate == 1) and inst not in ('RS', 'ENDS', 'STRUCT') :
+        fatal("Only STRUCT, ENDS and RS are valid within a struct")
+
+    if (structstate == 0) and inst in ('RS', 'ENDS') :
+        print(str(structstate) + " : " + inst + " : " + args)
+        fatal("ENDS and RS are not valid outside of a struct")
+
+    if (ifstate < 2) or inst in ('IF', 'ELSE', 'ENDIF') :
         functioncall = 'op_'+inst+'(p,args)'
         if PYTHONERRORS:
             return eval(functioncall)
@@ -1638,7 +1718,7 @@ def assemble_instruction(p, line):
             except SystemExit as e:
                 sys.exit(e)
             except:
-                fatal("Opcode not recognised")
+                fatal("Opcode not recognised: " + str(functioncall))
     else:
         return 0
 
@@ -1896,6 +1976,8 @@ for inputfile in file_args:
     forstack=[]
     ifstack = []
     ifstate = 0
+    structstack = []
+    structstate = 0
 
     for value in predefsymbols:
         sym=value.split('=',1)
@@ -1958,6 +2040,10 @@ for inputfile in file_args:
         print("Error: Mismatched EQU FOR and NEXT statements, too many EQU FOR")
         for item in forstack:
             print(item[1])
+        sys.exit(1)
+
+    if len(structstack) > 0:
+        print("Error: Mismatched STRUCT and ENDS statements, too many STRUCT")
         sys.exit(1)
 
     printsymbols = {}
