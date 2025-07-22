@@ -410,6 +410,83 @@ Prints the result of the expressions as soon as they are evaluated during
 assembly. Can be useful for logging and debugging, and showing the value of
 symbols (as an alternative to the -s command line option)
 
+`STRUCT`
+
+This allows structures to be defined, entries within the struct are offsets from
+the beginning of the structure.  Each entry in the structure defines how many bytes
+are used via the RS command. ENDS closes the structure, these can be nested.  Each STRUCT
+automatically defines a <name>.SizeOf value that is set to the size of the struct.
+Useful for IX/IY indexing
+
+e.g. 
+
+```
+Sprite:   STRUCT
+XPos:     RS  1
+YPos:     RS  1
+Width:    RS  1
+Height:   RS  1
+GfxPtr:   RS  2
+          ENDS
+
+          ld  ix, Sprites
+          ld  b, 100
+@Loop:
+          ld  d, (IX + Sprite.XPos)
+          ld  e, (IX + Sprite.YPos)
+          ld  l, (IX + Sprite.GfxPtr + 0)
+          ld  h, (IX + Sprite.GfxPtr + 1)
+          call  DrawSprite
+          ld  de, Sprite.SizeOf
+          add ix, de
+          djnz  @Loop
+
+Sprites:  ds  Sprite.SizeOf * 100
+```
+
+`MACRO`
+
+Macros are small sections of code that can be repeated, passing in various parameters to 
+alter the contents of the macro.  Each parameter is used via \0, \1 etc within the macro. 
+Macros can be given the same name as long as the number of parameters are different.  The number
+of parameters required is automatically calculated from the highest \n value within the macro.  Local
+labels are local to the macro itself
+
+e.g.
+
+```
+AND16BIT:			MACRO
+							LD		A, \0
+							AND		\2
+							LD		\0, A
+
+							LD		A, \1
+							AND		\3
+							LD		\1, A
+							ENDM
+
+              ; The following lines in the code
+							AND16BIT  H, L, &ff, &01
+							AND16BIT  D, E, &0f, &01
+
+              ; Would expand to the following when assembled
+							LD		A, H
+							AND		&ff
+							LD		H, A
+
+							LD		A, L
+							AND		&01
+              LD    L, A
+
+              LD		A, D
+							AND		&0f
+							LD		D, A
+
+							LD		A, E
+							AND		&01
+              LD    E, A
+```
+
 **Expressions and special characters**
 
 Wherever an instruction or directive requires a number, a mathematical
@@ -488,6 +565,14 @@ LIABILITIES ARISING FROM THE USE OF THE PROGRAM AND DOCUMENTATION AND THE
 INFORMATION PROVIDED BY THE PROGRAM AND THE DOCUMENTATION.
 
 **Release History**
+
+Version 1.23, 22 July 2025
+
+  - Added MACRO support (Adrian Brown)
+
+Version 1.22, 20 July 2025
+
+  - Added STRUCT, RS, ENDS option (Adrian Brown)
 
 Version 1.21, 11 July 2013
 

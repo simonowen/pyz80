@@ -355,10 +355,10 @@ def file_and_stack(explicit_currentfile=None):
 def set_symbol(sym, value, explicit_currentfile=None, is_label=False):
     symorig = expand_symbol(sym)
     sym = symorig if CASE else symorig.upper()
-
+    
     if sym[0]=='@':
         sym = sym + '@' + file_and_stack(explicit_currentfile=explicit_currentfile)
-
+    print("SYMBOL:" + sym + " : " +str(value) + " = " + str(explicit_currentfile))
     symboltable[sym] = value
     if sym != symorig:
         symbolcase[sym] = symorig
@@ -1692,14 +1692,139 @@ def op_ENDS(p,opargs):
 
     return 0
 
+def make_replacer(replacements):
+    def replace_match(match):
+        index = int(match.group(1))
+        return replacements[index] if 0 <= index < len(replacements) else match.group(0)
+    return replace_match
+
+def op_HandleMacro(p,opargs) :
+    global opcode, inst, macros, macrostate, macroindex
+
+    # See how many arguments we have
+    if opargs=='':
+        numArgs = 0
+    else:
+        macroArgs = [item.strip() for item in opargs.split(',')]
+        numArgs = len(macroArgs)
+
+    # See if we can find an entry for this
+    results = [entry for entry in macros if len(entry) >= 2 and entry[0] == inst and entry[1] == numArgs ]
+    
+    if len(results) > 1 :
+        fatal("Multiple macros with the same name and number of arguments")
+    elif len(results) == 0 :
+        fatal("Unable to find macro: " + str(inst) + " (NumArgs = " + str(numArgs) + ")")
+    else :
+        # Build up the lines to insert
+        lines = []
+
+        for l in results[0][2] :
+            # Build the line
+            line = ""
+
+            if len(l[0]) > 0 :
+                line += l[0] + ":"
+
+            line += "\t" + l[1]
+
+            if numArgs > 0 :
+                processed_line = re.sub(r'\\(\d+)', make_replacer(macroArgs), line)
+            else :
+                processed_line = line
+
+            print("MACROLINE:" + processed_line)
+
+            lines.append(processed_line)
+
+        # Track how many times for local label reasons
+        macroindex = macroindex + 1
+        
+        do_pass(p, lines, inst + str(macroindex))
+        
+    return 0
+
+def op_MACRO(p,opargs):
+    global macros, macrostate, currentmacro
+
+    check_args(opargs,0)
+
+    if (symbol):
+        # Handle case
+        sym = symbol if CASE else symbol.upper()
+        
+        # Now we can add this macro, symbol, number of params
+        currentmacro = [sym, 0, []]
+
+        # We are in a macro
+        macrostate = 1
+
+        # Setup the function call
+        globals()['op_' + sym] = op_HandleMacro
+    else:
+        warning("MACRO without symbol name")
+
+    print("MACROS: " + str(macrostate))
+
+    return 0
+
+def op_ENDM(p,opargs) :
+    global macros, macrostate, currentmacro
+
+    check_args(opargs,0)
+
+    if macrostate == 1 :
+        # Do we already have this macro
+        results = [entry for entry in macros if len(entry) >= 2 and entry[0] == currentmacro[0] and entry[1] == currentmacro[1] ]
+
+        # If we have this but its different
+        if len(results) > 0 :
+            if results[0][2] != currentmacro[2] :
+                fatal("Macro redefinition: " + str(currentmacro[0]))
+        else :
+            macros.append(currentmacro)
+        
+        currentmacro = None
+
+        macrostate = 0
+    else :
+        fatal("ENDM without opening MACRO")
+    
+    return 0
+
 def assemble_instruction(p, line):
+    global macrostate, macros, inst, currentmacro
+
     match = re.match(r'^(\w+)(.*)', line)
-    if not match:
+    if not match and macrostate == 0:
         fatal("Expected opcode or directive")
+    
+    if match != None :     
+        inst = match.group(1).upper()
+        args = match.group(2).strip()
+    else :
+        inst = ""
+        args = ""
 
-    inst = match.group(1).upper()
-    args = match.group(2).strip()
+    # Handle macros
+    if macrostate == 1 and (inst == "" or inst not in ('ENDM')):
+        if currentmacro == None :
+            fatal("In macro state without a macro")
 
+        params = re.findall(r'\\(\d+)', line)
+
+        if params != None :
+            numbers = list(map(int, params))
+
+            if numbers :
+                highest = max(numbers) + 1
+
+                # Is this greater than the previous
+                currentmacro[1] = max(highest, currentmacro[1])
+                print("Highest Macro Params: " + str(currentmacro[1]))
+        currentmacro[2].append([symbol, line])
+        return 0
+        
     # Check the struct state
     if (structstate == 1) and inst not in ('RS', 'ENDS', 'STRUCT') :
         fatal("Only STRUCT, ENDS and RS are valid within a struct")
@@ -1710,6 +1835,7 @@ def assemble_instruction(p, line):
 
     if (ifstate < 2) or inst in ('IF', 'ELSE', 'ENDIF') :
         functioncall = 'op_'+inst+'(p,args)'
+
         if PYTHONERRORS:
             return eval(functioncall)
         else:
@@ -1748,7 +1874,15 @@ def assembler_pass(p, inputfile):
     except:
         fatal("Couldn't open file "+this_currentfilename+" for reading")
 
+    do_pass(p, wholefile, this_currentfilename)
 
+def do_pass(p, wholefile, this_currentfilename) :
+    global memory, symboltable, symusetable, labeltable, origin, dumppage, dumporigin, symbol
+    global global_currentfile, global_currentline, lstcode, listingfile, macrostate
+# file references are local, so assembler_pass can be called recursively (for op_INC)
+# but copied to a global identifier for warning printouts
+    global global_path
+    
     consider_linenumber=0
     while consider_linenumber < len(wholefile):
 
@@ -1809,7 +1943,7 @@ def assembler_pass(p, inputfile):
         if len( symbol.split()) > 1:
             fatal("Whitespace not allowed in symbol name")
 
-        if (symbol and (opcode[0:3].upper() !="EQU") and (ifstate < 2)):
+        if (symbol and (opcode[0:3].upper() !="EQU") and (ifstate < 2) and (macrostate == 0) ):
             if p==1:
                 set_symbol(symbol, origin, is_label=True)
             elif get_symbol(symbol) != origin:
@@ -1846,7 +1980,7 @@ inputfile = ''
 outputfile = ''
 objectfile = ''
 
-PYTHONERRORS = False
+PYTHONERRORS = True
 ZIP = True
 CASE = False
 NOBODMAS = False
@@ -1978,7 +2112,10 @@ for inputfile in file_args:
     ifstate = 0
     structstack = []
     structstate = 0
-
+    macros = []
+    macrostate = 0
+    currentmacro = None
+    
     for value in predefsymbols:
         sym=value.split('=',1)
         if len(sym)==1:
@@ -2026,7 +2163,7 @@ for inputfile in file_args:
         dumpused = False
         autoexecpage = 0
         autoexecorigin = 0
-
+        macroindex = 0
         assembler_pass(p, inputfile)
 
     check_lastpage()
