@@ -455,36 +455,36 @@ labels are local to the macro itself
 e.g.
 
 ```
-AND16BIT:			MACRO
-							LD		A, \0
-							AND		\2
-							LD		\0, A
+AND16BIT:	MACRO
+          LD		A, \0
+          AND		\2
+          LD		\0, A
 
-							LD		A, \1
-							AND		\3
-							LD		\1, A
-							ENDM
+          LD		A, \1
+          AND		\3
+          LD		\1, A
+          ENDM
 
-              ; The following lines in the code
-							AND16BIT  H, L, &ff, &01
-							AND16BIT  D, E, &0f, &01
+          ; The following lines in the code
+          AND16BIT  H, L, &ff, &01
+          AND16BIT  D, E, &0f, &01
 
-              ; Would expand to the following when assembled
-							LD		A, H
-							AND		&ff
-							LD		H, A
+          ; Would expand to the following when assembled
+          LD		A, H
+          AND		&ff
+          LD		H, A
 
-							LD		A, L
-							AND		&01
-              LD    L, A
+          LD		A, L
+          AND		&01
+          LD    L, A
 
-              LD		A, D
-							AND		&0f
-							LD		D, A
+          LD		A, D
+          AND		&0f
+          LD		D, A
 
-							LD		A, E
-							AND		&01
-              LD    E, A
+          LD		A, E
+          AND		&01
+          LD    E, A
 ```
 
 **Expressions and special characters**
