@@ -358,7 +358,7 @@ def set_symbol(sym, value, explicit_currentfile=None, is_label=False):
     
     if sym[0]=='@':
         sym = sym + '@' + file_and_stack(explicit_currentfile=explicit_currentfile)
-    print("SYMBOL:" + sym + " : " +str(value) + " = " + str(explicit_currentfile))
+
     symboltable[sym] = value
     if sym != symorig:
         symbolcase[sym] = symorig
@@ -1733,8 +1733,6 @@ def op_HandleMacro(p,opargs) :
             else :
                 processed_line = line
 
-            print("MACROLINE:" + processed_line)
-
             lines.append(processed_line)
 
         # Track how many times for local label reasons
@@ -1763,8 +1761,6 @@ def op_MACRO(p,opargs):
         globals()['op_' + sym] = op_HandleMacro
     else:
         warning("MACRO without symbol name")
-
-    print("MACROS: " + str(macrostate))
 
     return 0
 
@@ -1980,7 +1976,7 @@ inputfile = ''
 outputfile = ''
 objectfile = ''
 
-PYTHONERRORS = True
+PYTHONERRORS = False
 ZIP = True
 CASE = False
 NOBODMAS = False

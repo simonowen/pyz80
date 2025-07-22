@@ -566,6 +566,10 @@ INFORMATION PROVIDED BY THE PROGRAM AND THE DOCUMENTATION.
 
 **Release History**
 
+Version 1.24, 22 July 2025
+
+  - Removed Debug (Adrian Brown)
+
 Version 1.23, 22 July 2025
 
   - Added MACRO support (Adrian Brown)
