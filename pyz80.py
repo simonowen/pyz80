@@ -1817,7 +1817,6 @@ def assemble_instruction(p, line):
 
                 # Is this greater than the previous
                 currentmacro[1] = max(highest, currentmacro[1])
-                print("Highest Macro Params: " + str(currentmacro[1]))
         currentmacro[2].append([symbol, line])
         return 0
         
