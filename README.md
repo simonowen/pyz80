@@ -229,7 +229,7 @@ e.g.
 @loop:  call work
         dec b
         jr nz, @-loop ; jump up two lines
-                
+
         ld b,7
 @loop:  call office
         dec b
@@ -245,7 +245,7 @@ e.g.
 nine:     equ 9
 k{nine}:  equ $ ; defines a symbol called k9
                 ; is equivalent to  k9: equ $
-```                
+```
 
 Note that the symbol being substituted must be available in the first pass of
 the assembler (i.e. it must be defined earlier in the file than it is used).
@@ -389,7 +389,7 @@ e.g.
 
 ```
 IF defined (DEBUG)
-  XOR A                
+  XOR A
   OUT (CLUT),a
 ENDIF
 ```
@@ -418,7 +418,7 @@ are used via the RS command. ENDS closes the structure, these can be nested.  Ea
 automatically defines a <name>.SizeOf value that is set to the size of the struct.
 Useful for IX/IY indexing
 
-e.g. 
+e.g.
 
 ```
 Sprite:   STRUCT
@@ -446,8 +446,8 @@ Sprites:  ds  Sprite.SizeOf * 100
 
 `MACRO`
 
-Macros are small sections of code that can be repeated, passing in various parameters to 
-alter the contents of the macro.  Each parameter is used via \0, \1 etc within the macro. 
+Macros are small sections of code that can be repeated, passing in various parameters to
+alter the contents of the macro.  Each parameter is used via \0, \1 etc within the macro.
 Macros can be given the same name as long as the number of parameters are different.  The number
 of parameters required is automatically calculated from the highest \n value within the macro.  Local
 labels are local to the macro itself
@@ -494,13 +494,13 @@ expression can be used instead. These are allowed to contain any symbol names
 defined in the file. If the result of an expression is negative, it will appear
 in the instruction in two's complement.
 
-`$`   a symbol representing the address of the current instruction  
-`&`   prefixes a hexadecimal number  
-`0x`  prefixes a hexadecimal number  
-`%`   prefixes a binary number  
-`0b`  prefixes a binary number  
-`"`   a single character enclosed in double-quotes can be used to represent the ascii value of that character  
-`""`  strings are delimited by the double-quote character. To encode a literal double-quote within a string, use the double-quote character twice.  
+`$`   a symbol representing the address of the current instruction
+`&`   prefixes a hexadecimal number
+`0x`  prefixes a hexadecimal number
+`%`   prefixes a binary number
+`0b`  prefixes a binary number
+`"`   a single character enclosed in double-quotes can be used to represent the ascii value of that character
+`""`  strings are delimited by the double-quote character. To encode a literal double-quote within a string, use the double-quote character twice.
 `\`   mod
 
 Several mathematical functions are available within expressions. You may use any

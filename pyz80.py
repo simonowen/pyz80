@@ -355,7 +355,7 @@ def file_and_stack(explicit_currentfile=None):
 def set_symbol(sym, value, explicit_currentfile=None, is_label=False):
     symorig = expand_symbol(sym)
     sym = symorig if CASE else symorig.upper()
-    
+
     if sym[0]=='@':
         sym = sym + '@' + file_and_stack(explicit_currentfile=explicit_currentfile)
 
@@ -1642,10 +1642,10 @@ def op_RS(p,opargs) :
 
     check_args(opargs,1)
 
-    if ( len(structstack) == 0 ) : 
+    if ( len(structstack) == 0 ) :
         warning("RS used outside of STRUCT")
         return 0
-    
+
     # Work out the size
     cur_size = 0
     str_sym = symbol
@@ -1660,7 +1660,7 @@ def op_RS(p,opargs) :
 
     # Work out the size
     expr_result = parse_expression(opargs, signed=1, silenterror=0)
-    
+
     # Move the size on
     set_symbol(structstack[-1][1], get_symbol(structstack[-1][1]) + expr_result)
 
@@ -1681,7 +1681,7 @@ def op_ENDS(p,opargs):
     ends_sizeof = get_symbol(ends_sizeof_symbol)
 
     # If this was the last struct on the stack we have done, else we now need to step this size past the outer struct
-    if ( len(structstack) > 0 ) : 
+    if ( len(structstack) > 0 ) :
         outer_struct = structstack.pop()
         outer_sizeof = get_symbol(outer_struct[1])
         set_symbol(outer_struct[1], outer_sizeof + ends_sizeof)
@@ -1710,7 +1710,7 @@ def op_HandleMacro(p,opargs) :
 
     # See if we can find an entry for this
     results = [entry for entry in macros if len(entry) >= 2 and entry[0] == inst and entry[1] == numArgs ]
-    
+
     if len(results) > 1 :
         fatal("Multiple macros with the same name and number of arguments")
     elif len(results) == 0 :
@@ -1737,9 +1737,9 @@ def op_HandleMacro(p,opargs) :
 
         # Track how many times for local label reasons
         macroindex = macroindex + 1
-        
+
         do_pass(p, lines, inst + str(macroindex))
-        
+
     return 0
 
 def op_MACRO(p,opargs):
@@ -1750,7 +1750,7 @@ def op_MACRO(p,opargs):
     if (symbol):
         # Handle case
         sym = symbol if CASE else symbol.upper()
-        
+
         # Now we can add this macro, symbol, number of params
         currentmacro = [sym, 0, []]
 
@@ -1779,13 +1779,13 @@ def op_ENDM(p,opargs) :
                 fatal("Macro redefinition: " + str(currentmacro[0]))
         else :
             macros.append(currentmacro)
-        
+
         currentmacro = None
 
         macrostate = 0
     else :
         fatal("ENDM without opening MACRO")
-    
+
     return 0
 
 def assemble_instruction(p, line):
@@ -1794,8 +1794,8 @@ def assemble_instruction(p, line):
     match = re.match(r'^(\w+)(.*)', line)
     if not match and macrostate == 0:
         fatal("Expected opcode or directive")
-    
-    if match != None :     
+
+    if match != None :
         inst = match.group(1).upper()
         args = match.group(2).strip()
     else :
@@ -1819,7 +1819,7 @@ def assemble_instruction(p, line):
                 currentmacro[1] = max(highest, currentmacro[1])
         currentmacro[2].append([symbol, line])
         return 0
-        
+
     # Check the struct state
     if (structstate == 1) and inst not in ('RS', 'ENDS', 'STRUCT') :
         fatal("Only STRUCT, ENDS and RS are valid within a struct")
@@ -1877,7 +1877,7 @@ def do_pass(p, wholefile, this_currentfilename) :
 # file references are local, so assembler_pass can be called recursively (for op_INC)
 # but copied to a global identifier for warning printouts
     global global_path
-    
+
     consider_linenumber=0
     while consider_linenumber < len(wholefile):
 
@@ -2110,7 +2110,7 @@ for inputfile in file_args:
     macros = []
     macrostate = 0
     currentmacro = None
-    
+
     for value in predefsymbols:
         sym=value.split('=',1)
         if len(sym)==1:
