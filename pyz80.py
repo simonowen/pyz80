@@ -2335,13 +2335,14 @@ for inputfile in file_args:
 
     if len(ifstack) > 0:
         print("Error: Mismatched IF and ENDIF statements, too many IF")
-        for item in ifstack:
-            print(item[0])
+        for ifitem in ifstack:
+            print(ifitem[0])
         sys.exit(1)
+
     if len(forstack) > 0:
         print("Error: Mismatched EQU FOR and NEXT statements, too many EQU FOR")
-        for item in forstack:
-            print(item[1])
+        for foritem in forstack:
+            print(foritem[1])
         sys.exit(1)
 
     if len(structstack) > 0:
@@ -2353,15 +2354,15 @@ for inputfile in file_args:
         # add to printsymbols any pair from symboltable whose key matches symreg
         for sym in symboltable:
             if re.search(symreg, sym, 0 if CASE else re.IGNORECASE):
-                value = symboltable[sym]
-                printsymbols[symbolcase.get(sym, sym)] = f"{value:x}" if HEX else value
+                listvalue = symboltable[sym]
+                printsymbols[symbolcase.get(sym, sym)] = f"{listvalue:x}" if HEX else listvalue
 
     if printsymbols != {}:
         print(printsymbols)
 
     if exportfile:
-        with open(exportfile, 'wb') as f:
-            pickle.dump({symbolcase.get(k, k):v for k, v in symboltable.items()}, f, protocol=0)
+        with open(exportfile, 'wb') as fexport:
+            pickle.dump({symbolcase.get(k, k):v for k, v in symboltable.items()}, fexport, protocol=0)
 
     if mapfile:
         addrmap = {}
@@ -2375,9 +2376,9 @@ for inputfile in file_args:
 
                 addrmap[labeltable[sym]] = symorig
 
-        with open(mapfile,'w') as f:
+        with open(mapfile,'w') as fmap:
             for addr,sym in sorted(addrmap.items()):
-                f.write("%04X=%s\n" % (addr,sym))
+                fmap.write(f"{addr:04X}={sym}\n")
 
     boot_page, boot_offset = (1,0) if firstpage == 32 else (firstpage,firstpageoffset)
     boot_sig = memory[boot_page][boot_offset+0xf7:boot_offset+0xf7+4]
