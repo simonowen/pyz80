@@ -10,7 +10,7 @@ import gzip
 import pickle
 import math
 import random  # noqa: F401 - import used via eval strings
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 
 def printusage():
@@ -218,14 +218,14 @@ def add_file_to_disk_image(image, filename, codestartpage, codestartoffset, exec
             image[imagepos:imagepos+copylen] = fromfile[fpos:fpos+copylen]
         else:
             if ((fpos+firstpageoffset)//16384) == (((fpos+codestartoffset)+copylen-1)//16384):
-                if memory[codestartpage+(fpos+codestartoffset)//16384] != '':
+                if memory[codestartpage+(fpos+codestartoffset)//16384] is not None:
                     image[imagepos:imagepos+copylen] = memory[codestartpage+(fpos+firstpageoffset)//16384][(fpos+codestartoffset) % 16384:(fpos+codestartoffset) % 16384+copylen]
             else:
                 copylen1 = 16384 - ((fpos+codestartoffset) % 16384)
                 page1 = (codestartpage+(fpos+codestartoffset) // 16384)
-                if memory[page1] != '':
+                if memory[page1] is not None:
                     image[imagepos:imagepos+copylen1] = memory[page1][(fpos+codestartoffset) % 16384:((fpos+codestartoffset) % 16384)+copylen1]
-                if (page1 < 31) and memory[page1+1] != '':
+                if (page1 < 31) and memory[page1+1] is not None:
                     image[imagepos+copylen1:imagepos+copylen] = memory[page1+1][0:((fpos+codestartoffset)+copylen) % 16384]
 
         fpos += copylen
@@ -268,7 +268,7 @@ def save_memory(memory, image=None, filename=None):
         firstpage = 1
         firstpageoffset = 0
 
-    if memory[firstpage] != '':
+    if memory[firstpage] is not None:
         # check that something has been assembled at all
 
         filelength = (lastpage - firstpage + 1) * 16384
@@ -311,7 +311,7 @@ def save_memory_to_file(filename, firstusedpage, firstpageoffset, filelength):
     while flen:
         wlen = min(16384-offset, flen)
 
-        if memory[page] != "":
+        if memory[page] is not None:
             pagestr = array_bytes(memory[page])
             objfile.write(pagestr[offset:offset+wlen])
         else:
@@ -683,14 +683,14 @@ def dump(bytes):
 
     if p == 2:
         if dumpspace_pending > 0:
-            if memory[dumppage]=='':
+            if memory[dumppage] is None:
                 initpage(dumppage)
             dumporigin += dumpspace_pending
             dumppage += dumporigin // 16384
             dumporigin %= 16384
             dumpspace_pending = 0
 
-        if memory[dumppage]=='':
+        if memory[dumppage] is None:
             initpage(dumppage)
         lstcode = ""
         for b in bytes:
@@ -702,7 +702,7 @@ def dump(bytes):
                 dumporigin = 0
                 dumppage += 1
 
-                if memory[dumppage]=='':
+                if memory[dumppage] is None:
                     initpage(dumppage)
 
 
@@ -2270,7 +2270,7 @@ for inputfile in file_args:
     symbolcase : Dict[str, int] = {}
     symusetable : Dict[str, int] = {}
     labeltable  : Dict[str, int] = {}
-    memory : List[bytes] = []
+    memory : List[Optional[bytes]] = []
     forstack : List[Tuple[str, str, int, int]] = []
     ifstack : List[Tuple[str, int]] = []
     ifstate = 0
@@ -2313,7 +2313,7 @@ for inputfile in file_args:
 
     # always 32 memory pages, each a 16k array allocate-on-write
     for initmemorypage in range(32):
-        memory.append('')
+        memory.append(None)
 
     for p in 1,2:
         print("pass ",p,"...")
@@ -2380,9 +2380,12 @@ for inputfile in file_args:
             for addr,sym in sorted(addrmap.items()):
                 fmap.write(f"{addr:04X}={sym}\n")
 
+    bootable = False
     boot_page, boot_offset = (1,0) if firstpage == 32 else (firstpage,firstpageoffset)
-    boot_sig = memory[boot_page][boot_offset+0xf7:boot_offset+0xf7+4]
-    bootable = bytes(b & 0x5F for b in boot_sig) == b'BOOT'
+    boot_memory = memory[boot_page] if boot_page < len(memory) else None
+    if boot_memory is not None:
+        boot_sig = boot_memory[boot_offset+0xf7:boot_offset+0xf7+4]
+        bootable = bytes(b & 0x5F for b in boot_sig) == b'BOOT'
 
     if bootfile and not bootable:
         if os.path.basename(bootfile.lower()) == 'samdos9':
