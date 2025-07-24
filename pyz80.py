@@ -384,7 +384,7 @@ def get_symbol(sym):
             reqfile,reqline = file_and_stack().rsplit(':', 1)
             reqline = int(reqline)
 
-            closestKey = None
+            closest, closestKey = sys.maxsize, None
             for key in symboltable:
                 if (sym+'@'+reqfile+":").startswith(key.rsplit(":",1)[0]+":") or (sym+'@'+reqfile+":").startswith(key.rsplit(":",1)[0]+"^"):
                     # key is allowed fewer layers of FOR stack, but any layers it has must match
