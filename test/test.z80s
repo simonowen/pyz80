@@ -1,0 +1,184 @@
+    ORG 32768
+    dump 32768
+
+    defw 0xffee
+
+withoutspace:
+    jp includeend
+
+
+    ld (0),de
+    ld (0), de
+    ld (0), DE
+
+    xor a
+
+    sra a,(IY+3)
+    sl1 b,(ix+4)
+    rlc c,(iy-17)
+    rrc d,(ix+65)
+
+n:  equ FOR 5
+m:  equ FOR 6
+    inc a
+    NEXT m
+    inc b
+    xor a
+    next n
+
+i:  equ for 32
+ldi{i+1}: for i+1,ldi
+    ret
+    next i
+
+    for 32, dw ldi{for+1}
+
+
+    db -1
+    db 0
+    dw -1
+    dw 0
+    
+includestart:
+    include "include.z80s"
+includeend:    
+includelength: equ includeend - includestart
+
+    ldi
+    db 3
+
+    for 8, db 1
+    for 8, db for
+
+    for 4, ldi
+    for 256, db -0.5+127.5*sin((FOR/256.0)*pi*2)
+
+
+    ld (iy+0),45
+    ld (ix+1),2
+
+    ex de,hl
+    ex (sp),hl
+    ex (sp),ix
+    
+
+    defb 0
+    DB 1
+    DB 8
+    DEFB 08, 01, 00, 0, 1, 0xab, 0b01110100
+    defb "A"
+    defm ","
+    
+;    defb "b","C","de"
+;    DEFB 43,23,",",17,56
+
+
+testoffset:
+
+#   ds -5
+    
+testoffset2:
+
+
+
+    ds 65520
+
+testoffset3:
+
+    ds align 256
+    assert ($\256) == 0
+
+before:
+    ds align 256
+after:
+    assert(before == after)
+
+
+
+testoffset4:
+   
+    if defined(DEBUG)
+        sll a
+    else
+        sl1 a
+    endif
+
+testoffset5:
+    
+    ld ixl,4
+    
+
+; caseinsensitive:
+;	dw CASEINSENSITIVE
+; CASEINSENSITIVE:
+;	dw caseinsensitive
+	
+	ld c,4
+@2:	ld b,30
+@:  outi
+    djnz @
+    dec c
+    jr nz,@2
+    
+@b: jr @+a
+        
+@a: jr @-b     
+        
+@:  jr @+c
+     
+@d: jr @+d
+
+@c: jr @-d         
+     
+@d: jr @c
+
+if defined (nobodmas)
+    assert (10+10/10) == 2
+endif    
+    
+nine: equ 9
+forty9: equ 49
+
+symbol{forty{nine}}: equ 1337
+
+assert defined(symbol49)
+
+quotestesting:
+    dm "message with a , and a "" in it"
+    
+    dm "0"
+    dm " "" "
+    dm "1"
+    dm """"
+    dm "2"
+    dm " "
+    dm "3"
+    dm ""
+    dm "4"
+    dm ","
+    dm "5"
+    dm """"""
+    dm "6"
+    dm ","""""""
+    dm "7"
+    
+    db 34
+    dm "8"
+    dm (44)
+    dm "9"
+    
+    db ""
+    dm "A"
+    db """"
+    dm "B"
+    dm ","
+    dm "C"
+    db ","
+    dm "D"
+    db "a","b",",","d"
+    dm "E"
+    db "e","","f",""""
+    dm "F"
+
+ 
+ 

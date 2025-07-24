@@ -1,42 +1,51 @@
 # pyz80 - a Z80 cross assembler
-Unofficial branch of https://sourceforge.net/projects/pyz80/ for fixes and enhancements.
 
-**pyz80 - a Z80 cross assembler**
-
-Version 1.21, released 11 July 2013
-
-By Andrew Collier
-
+By Andrew Collier  
 [https://www.intensity.org.uk/contact.html](https://www.intensity.org.uk/contact.html)
 
-**Introduction**
+Enhancements by  
+Simon Owen, Adrian Brown, Stefan Drissen, Pete Moore, Madis Kaal.
+
+## Introduction
 
 pyz80 is an assembler for the assembly language of the Z80 micro-processor.
 
-It is designed in particular for producing code to run on the Sam Coupé
+It is designed in particular for producing code to run on the SAM Coupé
 computer, and outputs disk images  which can be loaded by the SimCoupe emulator,
-or copied onto floppy disk for use with genuine hardware Sams. Nonetheless, it
+or copied onto floppy disk for use with genuine hardware SAMs. Nonetheless, it
 may be useful for users of other Z80-based platforms as well.
 
 pyz80 is distributed under the terms of the [GNU General Public
 License](https://www.gnu.org/licenses/gpl.html). You can download and use it at
 no cost. See the file COPYING for more information.
 
-**Installation**
+## Installation
 
-pyz80 is written in python, and should work on MacOS X, Linux, Windows and other
-platforms if the appropriate interpreter is installed.
+pyz80 requires Python 3.8 or later, which is available on modern versions of
+Windows, Linux, and macOS. Later releases are available at
+[python.org](https://www.python.org/downloads/).
 
-If you do not have python already, installers can be downloaded from:
+Initial install, which should add the `pyz80` command to your path:
+```
+python -m pip install pyz80
+```
 
-[https://www.python.org/downloads/](https://www.python.org/downloads/)
+Update existing installation:
+```
+python -m pip install --upgrade pyz80
+```
 
-**Usage**
+Uninstall:
+```
+python -m pip uninstall pyz80
+```
+
+## Usage
 
 pyz80 is a command-line tool. To use it, type pyz80 on your command line
 followed by the path to your input z80 source file:
 
-e.g.        `pyz80 testing/test.z80s`
+e.g. `pyz80 test/test.z80s`
 
 This will assemble the source file, and generate a disk image which contains the
 object code. You can supply more than one z80 source file, in which case each
@@ -65,7 +74,7 @@ to the directory before any assembled files, so for example you could add the
 
 You can add multiple files by using the -I option more than once:
 
-e.g.        `pyz80 -I SAMDOS -I file.txt textReader.z80s`
+e.g. `pyz80 -I SAMDOS -I file.txt textReader.z80s`
 
 Only code files can be added in this manner, they start at address 32768 and do
 not auto-execute. If you wish to change the start or execute address of the
@@ -141,14 +150,14 @@ the end of assembling a source file. If you specify the text name of a
 particular symbol, pyz80 will print out the value of that symbol, and any others
 whose name completely contains what you have asked for:
 
-e.g.        `pyz80 -s LDI3 testing/test.z80s`
+e.g. `pyz80 -s LDI3 test/test.z80s`
 
-prints        `{'LDI31': 33802, 'LDI3': 32850, 'LDI30': 33741, 'LDI32': 33865}`
+prints:  `{'LDI31': 33802, 'LDI3': 32850, 'LDI30': 33741, 'LDI32': 33865}`
 
 Another common use is to print the value of every symbol in the whole assembly,
 by using the wild-card character (full stop):
 
-e.g.        `pyz80 -s . testing/test.z80s`
+e.g. `pyz80 -s . test/test.z80s`
 
 Most precisely, regexp is a regular expression in python's format; if any part
 of a symbol matches the expression, then the symbol will be printed.
@@ -162,25 +171,25 @@ line is causing the confusion. If this option was specified on the command line,
 pyz80 will allow the python interpreter to print out its own messages about the
 problems it found, which may provide more detailed information.
 
-**Syntax**
+## Syntax
 
 The input Z80 source text files have a format similar to that used by COMET, one
-of the Sam's most popular native assemblers.
+of the SAM's most popular native assemblers.
 
 Each line of the source file may contain one symbol definition, and one Z80
 instruction or assembler directive.
 
 Comments start with semicolon and continue to the end of the line.
 
-**Instructions**
+## Instructions
 
 Z80 instructions and assembler directives may be formatted in upper or lower
 case.
 
 e.g.
 ```
-ld A,(DE)
-INC e
+ld   A,(DE)
+INC  e
 ```
 
 pyz80 recognises all valid Z80 instructions, included those traditionally
@@ -201,7 +210,7 @@ Undocumented instruction SLL is also included, but because it doesn't operate as
 its name implies, pyz80 emits a warning when it is used. To assemble this
 instruction without a warning, use the opcode SL1 instead.
 
-**Symbols**
+## Symbols
 
 Symbols are defined by the symbol name at the start of a line, followed by
 colon. They are generally given the address of the following instruction, but
@@ -227,13 +236,13 @@ always ignoring matches in the opposite direction.
 e.g.
 ```
 @loop:  call work
-        dec b
-        jr nz, @-loop ; jump up two lines
+        dec  b
+        jr   nz, @-loop ; jump up two lines
 
-        ld b,7
+        ld   b,7
 @loop:  call office
-        dec b
-        jr nz, @loop
+        dec  b
+        jr   nz, @loop
 ```
 
 Where a pair of braces is used as part of a symbol name, the value of the
@@ -262,7 +271,7 @@ e.g.
 ld a, defined(DEBUG)
 ```
 
-**Assembler directives**
+## Assembler directives
 
 `ORG address`
 
@@ -283,15 +292,15 @@ number from 0 to 31, and an offset within that page of 0 to 16383.
 
 The current DUMP address will be marked as the execute address in the directory
 entry of the output disk image. When the code file is loaded from the disk image
-by SamDOS, it will automatically call the execute address. Note that when a
+by SAMDOS, it will automatically call the execute address. Note that when a
 machine code routine is called from BASIC it will usually be paged into section
 C of the address space.
 
 This directive may not be used more than once during assembly.
 
 ```
-DEFB  n [,n ...]
-DB    n [,n ...]
+DEFB n [,n ...]
+DB   n [,n ...]
 ```
 
 Define bytes at the current address. Either DEFB or DB are allowed and are
@@ -299,8 +308,8 @@ equivalent in meaning. n can be a literal number or any expression, in the range
 0 to 255 (or -128 to +127).
 
 ```
-DEFW  n [,n ...]
-DW    n [,n ...]
+DEFW n [,n ...]
+DW   n [,n ...]
 ```
 
 Define words at the current address. Either DEFW or DW are allowed and are
@@ -308,8 +317,8 @@ equivalent in meaning. n can be a literal number or any expression, in the range
 0 to 65535 (or -32768 to +32767).
 
 ```
-DEFM  "string"
-DM    "string"
+DEFM "string"
+DM   "string"
 ```
 
 Define a message at the current address. The string is always delimited by
@@ -317,8 +326,8 @@ double quotes. To include a double quote in the string itself, place two double
 quote characters adjacent to each other.
 
 ```
-DEFS  n
-DS    n
+DEFS n
+DS   n
 ```
 
 Define storage space at the current address. The current address increases by n
@@ -362,7 +371,7 @@ NEXT symbol
 ```
 
 Repeats several lines of assembly, range times. When the lines between EQU FOR
-and NEXT are being assembled,  the symbol symbol is valid, and holds the
+and NEXT are being assembled, the symbol symbol is valid, and holds the
 iteration number from 0 to range-1.
 
 FOR...NEXT blocks can be nested, with each layer using a different symbol name.
@@ -372,11 +381,11 @@ within the same block. All references to it will target the same iteration.
 
 ```
 IF expression
-        ...
+    ...
 [ELSE IF expression]
-        ...
+    ...
 [ELSE]
-        ...
+    ...
 ENDIF
 ```
 
@@ -389,8 +398,8 @@ e.g.
 
 ```
 IF defined (DEBUG)
-  XOR A
-  OUT (CLUT),a
+    XOR A
+    OUT (CLUT),a
 ENDIF
 ```
 
@@ -422,24 +431,24 @@ e.g.
 
 ```
 Sprite:   STRUCT
-XPos:     RS  1
-YPos:     RS  1
-Width:    RS  1
-Height:   RS  1
-GfxPtr:   RS  2
+XPos:     RS   1
+YPos:     RS   1
+Width:    RS   1
+Height:   RS   1
+GfxPtr:   RS   2
           ENDS
 
-          ld  ix, Sprites
-          ld  b, 100
+          ld   ix, Sprites
+          ld   b, 100
 @Loop:
-          ld  d, (IX + Sprite.XPos)
-          ld  e, (IX + Sprite.YPos)
-          ld  l, (IX + Sprite.GfxPtr + 0)
-          ld  h, (IX + Sprite.GfxPtr + 1)
-          call  DrawSprite
-          ld  de, Sprite.SizeOf
-          add ix, de
-          djnz  @Loop
+          ld   d, (IX + Sprite.XPos)
+          ld   e, (IX + Sprite.YPos)
+          ld   l, (IX + Sprite.GfxPtr + 0)
+          ld   h, (IX + Sprite.GfxPtr + 1)
+          call DrawSprite
+          ld   de, Sprite.SizeOf
+          add  ix, de
+          djnz @Loop
 
 Sprites:  ds  Sprite.SizeOf * 100
 ```
@@ -455,14 +464,14 @@ labels are local to the macro itself
 e.g.
 
 ```
-AND16BIT:	MACRO
-          LD		A, \0
-          AND		\2
-          LD		\0, A
+AND16BIT: MACRO
+          LD   A, \0
+          AND  \2
+          LD   \0, A
 
-          LD		A, \1
-          AND		\3
-          LD		\1, A
+          LD   A, \1
+          AND  \3
+          LD   \1, A
           ENDM
 
           ; The following lines in the code
@@ -470,24 +479,24 @@ AND16BIT:	MACRO
           AND16BIT  D, E, &0f, &01
 
           ; Would expand to the following when assembled
-          LD		A, H
-          AND		&ff
-          LD		H, A
+          LD   A, H
+          AND  &ff
+          LD   H, A
 
-          LD		A, L
-          AND		&01
-          LD    L, A
+          LD   A, L
+          AND  &01
+          LD   L, A
 
-          LD		A, D
-          AND		&0f
-          LD		D, A
+          LD   A, D
+          AND  &0f
+          LD   D, A
 
-          LD		A, E
-          AND		&01
-          LD    E, A
+          LD   A, E
+          AND  &01
+          LD   E, A
 ```
 
-**Expressions and special characters**
+## Expressions and special characters
 
 Wherever an instruction or directive requires a number, a mathematical
 expression can be used instead. These are allowed to contain any symbol names
@@ -532,31 +541,30 @@ angle is specified in radians.
 
 `pi`
 
-**Thanks**
+## Thanks
 
-Thanks to Edwin Blink for writing the original COMET assembler for the Sam Coupé.
+Thanks to Edwin Blink for writing the original COMET assembler for the SAM Coupé.
 
 Thanks to Simon Owen and other users for their feedback during development.
 
-**Links**
+## Links
 
-pyz80 web page:
+Latest pyz80 source code:  
+[https://github.com/simonowen/pyz80/](https://github.com/simonowen/pyz80/)
 
+pyz80 Homepage:  
 [https://www.intensity.org.uk/samcoupe/pyz80.html](https://www.intensity.org.uk/samcoupe/pyz80.html)
 
-SimCoupe Homepage:
-
+SimCoupe Homepage:  
 [https://simonowen.com/simcoupe/](https://simonowen.com/simcoupe/)
 
-World of Sam archive:
-
+World of SAM archive:  
 [https://www.worldofsam.org/](https://www.worldofsam.org/)
 
-Wikipedia entry for the SAM Coupé (and for more links):
+Wikipedia entry for the SAM Coupé (and for more links):  
+[https://wikipedia.org/wiki/SAM\_Coupe](https://wikipedia.org/wiki/SAM_Coupé)
 
-[https://wikipedia.org/wiki/Sam\_Coupe](https://wikipedia.org/wiki/SAM_Coupé)
-
-**Disclaimer**
+## Disclaimer
 
 THIS PROGRAM AND DOCUMENTATION ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
 KIND, NOT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR FITNESS FOR A
@@ -564,7 +572,11 @@ PARTICULAR PURPOSE.  BY USING THE PROGRAM, YOU AGREE TO BEAR ALL RISKS AND
 LIABILITIES ARISING FROM THE USE OF THE PROGRAM AND DOCUMENTATION AND THE
 INFORMATION PROVIDED BY THE PROGRAM AND THE DOCUMENTATION.
 
-**Release History**
+## Release History
+
+Version 1.3.0, 25 July 2025
+
+  - Converted to Python package installed via pip, to simplify use.
 
 Version 1.24, 22 July 2025
 
@@ -578,6 +590,35 @@ Version 1.22, 20 July 2025
 
   - Added STRUCT, RS, ENDS option (Adrian Brown)
 
+Versions 1.21.x, 2014 to 2025
+
+  - Added --mapfile to generate a map of symbol addresses
+  - Added -x option for hex output from -s symbol display and PRINT directive.
+  - Added -B option to specify custom bootable file, replacing SAMDOS file.
+  - Added date/time to files in disk image (Stefan Drissen).
+  - Added support for 9-sector disk image, used in conjunction with samdos9 image.
+  - Added '3' to env shebang line, to ensure the Python 3.x is used.
+  - Added support for Python 3.x, removed support for Python 2.x.
+  - Added ALIGN directive to be equivalent to DEFS ALIGN.
+  - Added listing file generation (Madis Kaal)
+  - Fixed saved size of files with DUMP < &8000.
+  - Fixed -I with file smaller than 501 bytes (Stefan Drissen)
+  - Fixed defs >= &4000 at start results in no output (Stefan Drissen)
+  - Fixed support for relative paths with INC/MDAT.
+  - Fixed LD SP,IX and LD SP,IY generating the wrong code.
+  - Fixed JR allowing PO/PE/P/M conditions.
+  - Fixed LD I,n and LD R,n being accepted.
+  - Fixed e in some contexts being evaluated as math.e
+  - Fixed some invalid LD operand combinations.
+  - Fixed broken indexed register range checking.
+  - Fixed issue in earlier quoted comma fix.
+  - Fixed issues that ignored invalid digits in binary values.
+  - Fixed line number extraction under Windows, where paths also include a colon.
+  - Fixed trailing whitespace issue in symbols (Stefan Drissen)
+  - Fixed issue parsing source files with a BOM.
+  - Improved sector count calculation, rounding up instead of adding 1 (Pete Moore).
+  - Removed EX HL,DE as alternative for EX DE,HL
+
 Version 1.21, 11 July 2013
 
   - A symbol name could include tab characters, which should be treated as a source error (reported by Chris Pile)
@@ -586,7 +627,7 @@ Version 1.2, 2 February 2009
 
   - Add PRINT directive
   - Local symbols used in an included file will search the parent file to find a definition
-  - Chooses more appropriate names for files on the Sam disk image, based on the input source filename (reported by Thomas Harte)
+  - Chooses more appropriate names for files on the SAM disk image, based on the input source filename (reported by Thomas Harte)
   - Fixed options --obj and -o were incorrectly conflicting (reported by Thomas Harte)
   - Fixed symbol names containing strings 0b and 0x were misparsed (fixed by Simon Owen)
   - Fixed a misparseing of incorrect instructions of the form LD H,(23) (reported by Thomas Harte)

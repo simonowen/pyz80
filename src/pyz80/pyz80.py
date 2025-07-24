@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
 
 import getopt
 import sys
@@ -11,10 +13,12 @@ import pickle
 import math
 import random  # noqa: F401 - import used via eval strings
 from typing import Dict, List, Tuple, Optional
+from importlib.metadata import version, PackageNotFoundError
 
 
 def printusage():
-    print("pyz80 by Andrew Collier, modified by Simon Owen and Adrian Brown")
+    print(f"pyz80 by Andrew Collier")
+    print(" Enhancements by Simon Owen, Adrian Brown, Stefan Drissen")
     print(" https://github.com/simonowen/pyz80/")
     print("Usage:")
     print("     pyz80 (options) inputfile(s)")
@@ -56,22 +60,6 @@ def printusage():
     print("   display values from the -s option and PRINT directives in hex")
     print("-e")
     print("   use python's own error handling instead of trying to catch parse errors")
-
-
-def printlicense():
-    print("This program is free software; you can redistribute it and/or modify")
-    print("it under the terms of the GNU General Public License as published by")
-    print("the Free Software Foundation; either version 2 of the License, or")
-    print("(at your option) any later version.")
-    print(" ")
-    print("This program is distributed in the hope that it will be useful,")
-    print("but WITHOUT ANY WARRANTY; without even the implied warranty of")
-    print("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the")
-    print("GNU General Public License for more details.")
-    print(" ")
-    print("You should have received a copy of the GNU General Public License")
-    print("along with this program; if not, write to the Free Software")
-    print("Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA")
 
 
 def new_disk_image(sectors_per_track):
@@ -2168,9 +2156,11 @@ listingfile = None
 
 for option,value in option_args:
     if option in ['--version']:
-        printusage()
-        print("")
-        printlicense()
+        try:
+            pkg_version = version('pyz80')
+        except PackageNotFoundError:
+            pkg_version = 'unknown'
+        print(f"pyz80 version {pkg_version}")
         sys.exit(0)
     if option in ['--help','-h']:
         printusage()
@@ -2405,3 +2395,8 @@ if outputfile != '':
     save_disk_image(image, outputfile)
 
 print("Finished")
+
+
+def main():
+    # Global code already run.
+    pass

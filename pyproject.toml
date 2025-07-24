@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=77.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyz80"
+version = "1.3.0"
+description = "Z80 cross-assembler for SAM Coupé code"
+readme = { file = "ReadMe.md", content-type = "text/markdown" }
+authors = [
+    { name = "Andrew Collier", email = "andrew@intensity.org.uk" },
+    { name = "Simon Owen", email = "simon@simonowen.com" },
+    { name = "Adrian Brown", email = "adrian@apbcomputerservices.co.uk" },
+    { name = "Stefan Drissen", email = "stefan.drissen@gmail.com" },
+]
+license = "GPL-2.0-or-later"
+keywords = ["sam", "coupe", "z80", "assembler"]
+urls = { "Homepage" = "https://github.com/simonowen/pyz80" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Software Development :: Assemblers",
+    "Topic :: Utilities",
+    "Environment :: Console"
+]
+
+[project.scripts]
+pyz80 = "pyz80.pyz80:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

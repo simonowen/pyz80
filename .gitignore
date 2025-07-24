@@ -3,3 +3,8 @@
 !.github
 !.flake8
 !.mypy.ini
+__pycache__/
+build/
+dist/
+*.egg-info/
+*.py[cod]

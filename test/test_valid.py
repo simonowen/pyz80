@@ -7,7 +7,7 @@ import tempfile
 import subprocess
 
 curr_dir = os.path.split(__file__)[0]
-pyz80_path = os.path.join(curr_dir, '../pyz80.py')
+pyz80_path = os.path.join(curr_dir, '../src/pyz80/pyz80.py')
 dummydos_path = os.path.join(curr_dir, 'dummydos')
 
 test_files = [
