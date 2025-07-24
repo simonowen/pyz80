@@ -1,3 +1,5 @@
 .*
 !.gitignore
 !.github
+!.flake8
+!.mypy.ini

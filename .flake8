@@ -1,0 +1,12 @@
+[flake8]
+ignore = E225, E226, E231, E501
+    # E225: Missing whitespace around operator
+    # E226: Missing whitespace around arithmetic operator
+    # E231: Missing whitespace after ',', ';', or ':'
+    # E501: Line too long (82 > 79 characters)
+per-file-ignores =
+     testing/test_invalid.py: E241  # E241: Multiple spaces after ','
+exclude =
+    .git
+    .vscode
+    dist
