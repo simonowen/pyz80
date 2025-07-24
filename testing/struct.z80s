@@ -1,0 +1,29 @@
+; Test using STRUCT
+
+            org &8000
+            dump $
+
+Sprite:   STRUCT
+XPos:     RS  1
+YPos:     RS  1
+Width:    RS  1
+Height:   RS  1
+GfxPtr:   RS  2
+          ENDS
+
+          ld  ix, Sprites
+          ld  b, 100
+@Loop:
+          ld  d, (IX + Sprite.XPos)
+          ld  e, (IX + Sprite.YPos)
+          ld  l, (IX + Sprite.GfxPtr + 0)
+          ld  h, (IX + Sprite.GfxPtr + 1)
+          call  DrawSprite
+          ld  de, Sprite.SizeOf
+          add ix, de
+          djnz  @Loop
+
+Sprites:  ds  Sprite.SizeOf * 100
+
+DrawSprite:
+          ret

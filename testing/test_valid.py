@@ -17,6 +17,10 @@ test_files = [
     ("bootable.z80s", "bootable.dsk", None, ["-B", dummydos_path]),
     ("unbootable.z80s", "unbootable.dsk", None, ["-B", dummydos_path]),
     ("utf8-bom.z80s", None, None, []),
+    ("struct.z80s", None, "struct.bin", []),
+    ("struct_lower.z80s", None, "struct.bin", []),
+    ("macro.z80s", None, "macro.bin", []),
+    ("macro_lower.z80s", None, "macro.bin", []),
 ]
 
 

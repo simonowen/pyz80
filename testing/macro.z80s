@@ -1,0 +1,15 @@
+; Test using MACRO
+
+AND16BIT:	MACRO
+          LD		A, \0
+          AND		\2
+          LD		\0, A
+
+          LD		A, \1
+          AND		\3
+          LD		\1, A
+          ENDM
+
+          ; The following lines in the code
+          AND16BIT  H, L, &ff, &01
+          AND16BIT  D, E, &0f, &01
