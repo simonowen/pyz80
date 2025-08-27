@@ -2092,7 +2092,7 @@ def do_pass(p, wholefile, this_currentfilename):
         if len(symbol.split()) > 1:
             fatal("Whitespace not allowed in symbol name")
 
-        if symbol and (opcode[0:3].upper() !="EQU") and (ifstate < 2) and (macrostate == 0):
+        if (symbol and (opcode[0:3].upper() !="EQU") and (opcode[0:6].upper() !="STRUCT") and (opcode[0:5].upper() !="MACRO") and (ifstate < 2) and (macrostate == 0) and structstate == 0 ):
             if p==1:
                 set_symbol(symbol, origin, is_label=True)
             elif get_symbol(symbol) != origin:
