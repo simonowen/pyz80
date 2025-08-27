@@ -574,6 +574,11 @@ INFORMATION PROVIDED BY THE PROGRAM AND THE DOCUMENTATION.
 
 ## Release History
 
+Version 1.3.1, 27 August 2025
+
+  - Fixed issue where symbols were being defined for elemnts within a struct without
+    the structure prefix
+
 Version 1.3.0, 25 July 2025
 
   - Converted to Python package installed via pip, to simplify use.
